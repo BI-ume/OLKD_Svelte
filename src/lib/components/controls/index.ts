@@ -9,3 +9,4 @@ export { default as ContextMenu } from './ContextMenu.svelte';
 export { default as GotoButton } from './GotoButton.svelte';
 export { default as MeasureButton } from './MeasureButton.svelte';
 export { default as SettingsButton } from './SettingsButton.svelte';
+export { default as SearchBox } from './SearchBox.svelte';

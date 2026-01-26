@@ -5,7 +5,7 @@
 	import { initializeLayers } from '$lib/layers';
 	import { Map } from '$lib/components/map';
 	import { Layerswitcher } from '$lib/components/layerswitcher';
-	import { ZoomControls, ScaleLine, Attribution, Geolocation, HomeButton, OverviewMap, UrlSync, ContextMenu, GotoButton, MeasureButton, SettingsButton } from '$lib/components/controls';
+	import { ZoomControls, ScaleLine, Attribution, Geolocation, HomeButton, OverviewMap, UrlSync, ContextMenu, GotoButton, MeasureButton, SettingsButton, SearchBox } from '$lib/components/controls';
 
 	// Get config ID from route parameter
 	let configId = $derived($page.params.config || 'default');
@@ -66,6 +66,7 @@
 		<Map />
 		<UrlSync />
 		<ContextMenu />
+		<SearchBox />
 		<ZoomControls />
 		<HomeButton />
 		{#if showGeolocation}

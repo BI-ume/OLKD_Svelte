@@ -24,3 +24,11 @@ export {
 	layersInitialized,
 	visibleOverlayLayers
 } from './layerStore';
+
+export {
+	searchStore,
+	parseWKT,
+	hasResults,
+	bestMatch
+} from './searchStore';
+export type { SearchResult, ParsedSearchResult } from './searchStore';

@@ -3,7 +3,7 @@
 	import { configStore } from '$lib/stores/configStore';
 
 	let homeCenter = [468152.5616, 5764386.17546];
-	let homeZoom = 8;
+	let homeZoom = 13;
 
 	function zoomHome() {
 		const view = mapStore.getView();

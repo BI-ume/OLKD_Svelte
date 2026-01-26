@@ -4,11 +4,6 @@
 
 	let isOpen = $state(false);
 
-	// Zoom level offset between our EPSG:25832 tile grid and Web Mercator
-	// Our maxRes ≈ 4891.97 m/px, Web Mercator maxRes ≈ 156543.03 m/px
-	// Ratio = 156543.03 / 4891.97 ≈ 32 = 2^5, so offset = 5
-	const WEB_MERCATOR_ZOOM_OFFSET = 5;
-
 	// Get current map center in EPSG:25832
 	function getMapCenterUTM(): { easting: number; northing: number; zoom: number } | null {
 		const view = mapStore.getView();
@@ -19,7 +14,7 @@
 		return { easting: center[0], northing: center[1], zoom: Math.round(zoom) };
 	}
 
-	// Get current map center in WGS84 with Web Mercator zoom level
+	// Get current map center in WGS84
 	function getMapCenterWGS84(): { lat: number; lon: number; zoom: number } | null {
 		const view = mapStore.getView();
 		if (!view) return null;
@@ -27,9 +22,7 @@
 		const zoom = view.getZoom();
 		if (!center || zoom === undefined) return null;
 		const wgs84 = transform(center, 'EPSG:25832', 'EPSG:4326');
-		// Translate our zoom level to Web Mercator zoom level
-		const webMercatorZoom = Math.round(zoom) + WEB_MERCATOR_ZOOM_OFFSET;
-		return { lat: wgs84[1], lon: wgs84[0], zoom: webMercatorZoom };
+		return { lat: wgs84[1], lon: wgs84[0], zoom: Math.round(zoom) };
 	}
 
 	const externalLinks = [

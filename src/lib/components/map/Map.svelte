@@ -2,7 +2,6 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { Map, View } from 'ol';
 	import { get as getProjection } from 'ol/proj';
-	import { getWidth } from 'ol/extent';
 	import { register } from 'ol/proj/proj4';
 	import proj4 from 'proj4';
 	import { mapStore } from '$lib/stores/mapStore';
@@ -21,12 +20,13 @@
 	register(proj4);
 
 	/**
-	 * Generate resolution array for the tile grid.
-	 * This matches the original app's WMTS tile grid calculation.
+	 * Generate resolution array matching Web Mercator (OSM/Google Maps) zoom levels.
+	 * This allows direct zoom level compatibility with external map services.
 	 */
-	function createResolutions(projectionExtent: number[], levels: number, tileSize: number = 256): number[] {
-		const width = getWidth(projectionExtent);
-		const maxResolution = width / tileSize;
+	function createWebMercatorResolutions(levels: number): number[] {
+		// Web Mercator max resolution: Earth circumference / 256 tiles
+		// 40075016.686 m / 256 = 156543.03392804097 m/px
+		const maxResolution = 156543.03392804097;
 
 		const resolutions: number[] = [];
 		for (let z = 0; z < levels; z++) {
@@ -51,13 +51,12 @@
 			return;
 		}
 
-		// Create resolution array based on projection extent
-		// This matches the tile grid used by WMTS layers
-		const projectionExtent = config.projectionExtent ?? projection.getExtent() ?? [-46133.17, 5048875.26857567, 1206211.10142433, 6301219.54];
-		const maxZoom = config.maxZoom ?? 20;
-		const resolutions = createResolutions(projectionExtent, maxZoom + 1);
+		// Create resolution array matching Web Mercator zoom levels
+		// This enables direct zoom level compatibility with OSM/Google Maps
+		const maxZoom = config.maxZoom ?? 22;
+		const resolutions = createWebMercatorResolutions(maxZoom + 1);
 
-		// Create view with explicit resolutions to match tile grid
+		// Create view with Web Mercator-compatible resolutions
 		const view = new View({
 			projection: projection,
 			center: config.center ?? [468152, 5764386],

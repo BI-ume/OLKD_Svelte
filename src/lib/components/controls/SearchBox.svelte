@@ -17,8 +17,8 @@
 	let resultSource: VectorSource | null = null;
 	let resultLayer: VectorLayer<VectorSource> | null = null;
 
-	// Zoom level for search results (matches original app)
-	const ZOOM_LEVEL = 14;
+	// Zoom level for search results (Web Mercator compatible)
+	const ZOOM_LEVEL = 19;
 
 	// Style for search result geometry
 	const resultStyle = new Style({

@@ -1,0 +1,264 @@
+// Layer source configuration
+export interface WMSSourceConfig {
+	url?: string;
+	format?: string;
+	params?: {
+		LAYERS?: string;
+		SRS?: string;
+		STYLES?: string;
+		TRANSPARENT?: string;
+	};
+	projection?: string;
+	tilePixelRatio?: number;
+	tileSize?: number[];
+	hqUrl?: string;
+	hqLayer?: string;
+	hqMatrixSet?: string;
+}
+
+export interface WMTSSourceConfig {
+	url?: string;
+	layer?: string;
+	projection?: string;
+	format?: string;
+	extent?: [number, number, number, number];
+	levels?: number;
+	matrixSet?: string;
+	tileSize?: number[];
+	hqUrl?: string;
+	hqLayer?: string;
+	hqMatrixSet?: string;
+}
+
+export interface GeoJSONSourceConfig {
+	url?: string;
+	dataProjection?: string;
+	file?: string;
+	additionalParameters?: {
+		layers?: string[];
+	};
+}
+
+export interface SensorThingsSourceConfig {
+	url?: string;
+	urlParameters?: {
+		filter?: string;
+		expand?: string;
+	};
+	refreshInterval?: number;
+	layer?: string;
+}
+
+export type SourceConfig = WMSSourceConfig | WMTSSourceConfig | GeoJSONSourceConfig | SensorThingsSourceConfig;
+
+// OpenLayers layer configuration (as passed from backend)
+export interface OlLayerConfig {
+	source?: SourceConfig;
+	visible?: boolean;
+	opacity?: number;
+}
+
+// Legend configuration
+export interface LegendConfig {
+	type?: string;
+	url?: string;
+	title?: string;
+}
+
+// FeatureInfo configuration
+export interface FeatureInfoConfig {
+	catalog?: boolean;
+	catalogGroup?: string;
+	properties?: Record<string, unknown>;
+}
+
+// Search configuration
+export interface SearchConfig {
+	field?: string;
+	title?: string;
+	params?: Record<string, string>;
+}
+
+// Style configuration for vector layers
+export interface StyleConfig {
+	fillColor?: string;
+	strokeColor?: string;
+	strokeWidth?: number;
+	radius?: number;
+	externalGraphic?: string;
+	graphicWidth?: number;
+	graphicHeight?: number;
+}
+
+// Layer types supported by the application
+export type LayerType =
+	| 'wms'
+	| 'tiledwms'
+	| 'wmts'
+	| 'postgis'
+	| 'static_geojson'
+	| 'dynamic_geojson'
+	| 'digitize'
+	| 'sensorthings';
+
+// Individual layer configuration
+export interface LayerConfig {
+	name: string;
+	title: string;
+	type: LayerType;
+	isBackground?: boolean;
+	status?: 'active' | 'inactive';
+	catalog?: boolean | { title?: string; visible?: boolean };
+	olLayer?: OlLayerConfig;
+	visible?: boolean;
+	metadataUrl?: string;
+	legend?: boolean | LegendConfig;
+	opacity?: number;
+	attribution?: string;
+	searchConfig?: SearchConfig[];
+	featureinfo?: FeatureInfoConfig;
+	style?: StyleConfig;
+	externalGraphicPrefix?: string;
+	displayInLayerswitcher?: boolean;
+	permalink?: boolean;
+	catalogLayer?: boolean;
+	predefined?: boolean;
+	abstract?: string;
+}
+
+// Layer group configuration
+export interface GroupConfig {
+	name: string;
+	title: string;
+	layers: LayerConfig[];
+	status?: 'active' | 'inactive';
+	metadataUrl?: string;
+	showGroup?: boolean;
+	abstract?: string;
+	singleSelect?: boolean;
+	singleSelectGroup?: boolean;
+	legend?: boolean | LegendConfig;
+	defaultVisibleLayers?: string[];
+	collapsed?: boolean;
+	catalog?: boolean | { title?: string; visible?: boolean };
+	predefined?: boolean;
+}
+
+// Layers definition (returned by Flask API)
+export interface LayersDef {
+	backgroundLayer: LayerConfig[];
+	overlays: GroupConfig[];
+}
+
+// Map configuration
+export interface MapConfig {
+	center?: [number, number];
+	centerProjection?: string;
+	zoom?: number;
+	projection?: string;
+	projectionExtent?: [number, number, number, number];
+	maxExtent?: [number, number, number, number];
+	minZoom?: number;
+	maxZoom?: number;
+	defaultBackground?: string;
+	defaultOverlays?: string[];
+}
+
+// Component toggles configuration
+export interface ComponentsConfig {
+	layerswitcher?: boolean;
+	search?: boolean;
+	legend?: boolean;
+	print?: boolean;
+	permalink?: boolean;
+	geolocation?: boolean;
+	measure?: boolean;
+	draw?: boolean;
+	catalog?: boolean;
+	alkis?: boolean;
+	digitize?: boolean;
+	geoeditor?: boolean;
+	timetable?: boolean;
+	contextMenu?: boolean | string;
+	scale?: boolean;
+	zoom?: boolean;
+	attribution?: boolean;
+	overviewmap?: boolean;
+	mouseposition?: boolean;
+}
+
+// Print configuration
+export interface PrintConfig {
+	mode?: string;
+	defaultScale?: number;
+	scales?: number[];
+	outputFormats?: { name: string; mimetype: string }[];
+	pageSizes?: { name: string; width: number; height: number }[];
+	defaultPageSize?: string;
+	printUrl?: string;
+}
+
+// Geolocation configuration
+export interface GeolocationConfig {
+	tracking?: boolean;
+	zoom?: number;
+	style?: StyleConfig;
+}
+
+// Search provider configuration
+export interface SearchProviderConfig {
+	url?: string;
+	params?: Record<string, string>;
+	responseProcessor?: string;
+}
+
+// Application configuration (header, title, etc.)
+export interface AppHeaderConfig {
+	title?: string;
+	headerLogo?: string;
+	ogImage?: string;
+	iframe?: string;
+	tour?: string;
+	tooltipDelay?: number;
+	showNoBackground?: boolean;
+}
+
+// Full application configuration
+export interface AppConfig {
+	app?: AppHeaderConfig;
+	map?: MapConfig;
+	components?: ComponentsConfig;
+	printConfig?: PrintConfig;
+	geolocationConfig?: GeolocationConfig;
+	searchConfig?: SearchProviderConfig[];
+	backgrounds?: {
+		include?: string[];
+		exclude?: string[];
+		explicit?: string[];
+	};
+	layers?: {
+		include?: string[];
+		exclude?: string[];
+		explicit?: string[];
+	};
+	groups?: {
+		include?: string[];
+		exclude?: string[];
+		explicit?: string[];
+		singleSelect?: string[];
+	};
+}
+
+// API response structure
+export interface ConfigApiResponse {
+	app: AppConfig;
+	layers: LayersDef;
+}
+
+// URL configuration for proxies
+export interface UrlConfig {
+	wmsProxy?: string;
+	wmtsProxy?: string;
+	staticGeojson?: string;
+	icons?: string;
+}

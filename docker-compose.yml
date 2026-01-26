@@ -1,0 +1,46 @@
+# Development Docker Compose
+# Usage: docker compose up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/munimap:/app/munimap:ro
+      - ./backend/configs:/app/configs:ro
+    environment:
+      - FLASK_APP=munimap.app:create_app
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    # Use Flask dev server in development
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=8080", "--reload"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src:ro
+      - ./static:/app/static:ro
+      - ./svelte.config.js:/app/svelte.config.js:ro
+      - ./vite.config.ts:/app/vite.config.ts:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      backend:
+        condition: service_healthy

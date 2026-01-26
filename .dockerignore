@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+backend/.venv
+
+# Build output
+build
+.svelte-kit
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# Docker files (don't need to copy these into containers)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+LICENSE
+
+# Test files
+*.test.*
+*.spec.*
+__pycache__
+*.pyc
+.pytest_cache

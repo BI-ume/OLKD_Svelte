@@ -5,7 +5,19 @@
 	import { initializeLayers } from '$lib/layers';
 	import { Map } from '$lib/components/map';
 	import { Layerswitcher } from '$lib/components/layerswitcher';
-	import { ZoomControls, ScaleLine, Attribution, Geolocation, HomeButton, OverviewMap, UrlSync, ContextMenu, GotoButton, MeasureButton, SettingsButton } from '$lib/components/controls';
+	import {
+		ZoomControls,
+		ScaleLine,
+		Attribution,
+		Geolocation,
+		HomeButton,
+		OverviewMap,
+		UrlSync,
+		ContextMenu,
+		GotoButton,
+		MeasureButton,
+		SaveSettings
+	} from '$lib/components/controls';
 
 	// Extract config ID from URL query parameter or use default
 	let configId = $derived(getConfigId($page.url));
@@ -85,7 +97,7 @@
 		{/if}
 		<GotoButton />
 		<MeasureButton />
-		<SettingsButton />
+		<SaveSettings />
 		{#if showScaleLine}
 			<ScaleLine />
 		{/if}

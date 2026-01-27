@@ -47,14 +47,13 @@ layers:
         - luftbilder_2020_to
 
 components:
-    serviceButton: true
     search: true
     print: true
     layerswitcher: true
     legend: true
     geolocation: true
     scaleLine: true
-    overviewmap: false
+    overviewmap: true
     saveSettings: false
     alkis: false 
     measureLabelSegments: true

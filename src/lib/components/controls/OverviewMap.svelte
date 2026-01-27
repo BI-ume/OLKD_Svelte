@@ -64,13 +64,13 @@
 		.custom-overview-map {
 			position: absolute;
 			left: 10px;
-			bottom: 40px;
+			bottom: 10px;
 			right: auto;
 			top: auto;
 		}
 
 		.custom-overview-map.ol-uncollapsible {
-			bottom: 40px;
+			bottom: 10px;
 			left: 10px;
 		}
 
@@ -90,8 +90,8 @@
 		/* Button when map is expanded - position at top-right of the map */
 		.custom-overview-map button {
 			position: absolute;
-			top: 0;
-			right: 0;
+			bottom: 0;
+			left: 0;
 			width: 28px;
 			height: 28px;
 			background: white;
@@ -108,9 +108,9 @@
 			background: #f0f0f0;
 		}
 
-		/* Button when collapsed - just show the button */
-		.custom-overview-map.ol-collapsed button {
-			position: static;
+		/* When collapsed, just show the button */
+		.custom-overview-map.ol-collapsed .ol-overviewmap-map {
+			display: none;
 		}
 
 		.custom-overview-map button span {

@@ -6,9 +6,11 @@
 		layer: Layer;
 		indented?: boolean;
 		showOpacity?: boolean;
+		onRemove?: () => void;
+		onSliderToggle?: (isOpen: boolean) => void;
 	}
 
-	let { layer, indented = false, showOpacity = true }: Props = $props();
+	let { layer, indented = false, showOpacity = true, onRemove, onSliderToggle }: Props = $props();
 
 	let showSlider = $state(false);
 
@@ -24,10 +26,18 @@
 
 	function toggleSlider() {
 		showSlider = !showSlider;
+		onSliderToggle?.(showSlider);
 	}
 
-	let visible = $derived(layer.visible);
-	let opacity = $derived(Math.round(layer.opacity * 100));
+	// Subscribe to layerStore to trigger reactivity when layer state changes
+	let visible = $derived.by(() => {
+		void $layerStore; // Create dependency on store
+		return layer.visible;
+	});
+	let opacity = $derived.by(() => {
+		void $layerStore; // Create dependency on store
+		return Math.round(layer.opacity * 100);
+	});
 </script>
 
 <div class="layer-item" class:indented>
@@ -71,6 +81,19 @@
 				{#if showSlider}
 					<span class="opacity-value">{opacity}%</span>
 				{/if}
+			</button>
+		{/if}
+
+		{#if onRemove}
+			<button
+				class="remove-btn"
+				onclick={onRemove}
+				title="Thema entfernen"
+				aria-label="{layer.title} entfernen"
+			>
+				<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+					<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+				</svg>
 			</button>
 		{/if}
 	</div>
@@ -237,5 +260,24 @@
 		height: 4px;
 		border-radius: 2px;
 		background: #ddd;
+	}
+
+	.remove-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ccc;
+		border-radius: 4px;
+		transition: background-color 0.15s, color 0.15s;
+		flex-shrink: 0;
+	}
+
+	.remove-btn:hover {
+		background-color: #fee;
+		color: #d32f2f;
 	}
 </style>

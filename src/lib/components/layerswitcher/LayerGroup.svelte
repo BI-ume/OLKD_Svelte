@@ -3,9 +3,15 @@
 	import { layerStore } from '$lib/stores/layerStore';
 	import LayerItem from './LayerItem.svelte';
 
-	export let group: Group;
+	interface Props {
+		group: Group;
+		onRemove?: (name: string) => void;
+		onSliderToggle?: (isOpen: boolean) => void;
+	}
 
-	let expanded = !group.collapsed;
+	let { group, onRemove, onSliderToggle }: Props = $props();
+
+	let expanded = $state(!group.collapsed);
 
 	function toggleExpanded() {
 		expanded = !expanded;
@@ -13,19 +19,27 @@
 	}
 
 	function toggleGroupVisibility() {
-		// Use store to toggle - this ensures reactivity across all components
 		layerStore.toggleGroupVisibility(group.name);
 	}
 
-	$: groupVisible = group.visible;
-	$: hasVisibleLayers = group.layers.some((l) => l.visible);
+	function handleRemove() {
+		if (onRemove) {
+			onRemove(group.name);
+		}
+	}
+
+	// Subscribe to layerStore to trigger reactivity when layer state changes
+	let hasVisibleLayers = $derived.by(() => {
+		void $layerStore; // Create dependency on store
+		return group.layers.some((l) => l.visible);
+	});
 </script>
 
 <div class="layer-group">
 	<div class="group-header">
 		<button
 			class="expand-btn"
-			on:click={toggleExpanded}
+			onclick={toggleExpanded}
 			title={expanded ? 'Gruppe einklappen' : 'Gruppe ausklappen'}
 			aria-expanded={expanded}
 		>
@@ -42,8 +56,8 @@
 
 		<button
 			class="visibility-btn"
-			on:click={toggleGroupVisibility}
-			title={groupVisible ? 'Gruppe ausblenden' : 'Gruppe einblenden'}
+			onclick={toggleGroupVisibility}
+			title={hasVisibleLayers ? 'Gruppe ausblenden' : 'Gruppe einblenden'}
 		>
 			<span class="visibility-icon" class:visible={hasVisibleLayers}>
 				{#if hasVisibleLayers}
@@ -62,15 +76,28 @@
 			</span>
 		</button>
 
-		<button class="group-title-btn" on:click={toggleExpanded}>
+		<button class="group-title-btn" onclick={toggleExpanded}>
 			<span class="group-title">{group.title}</span>
 		</button>
+
+		{#if onRemove}
+			<button
+				class="remove-btn"
+				onclick={handleRemove}
+				title="Thema entfernen"
+				aria-label="{group.title} entfernen"
+			>
+				<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+					<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 
 	{#if expanded}
 		<div class="group-layers">
 			{#each group.layers as layer (layer.name)}
-				<LayerItem {layer} indented />
+				<LayerItem {layer} indented {onSliderToggle} />
 			{/each}
 		</div>
 	{/if}
@@ -161,6 +188,25 @@
 		font-size: 14px;
 		font-weight: 600;
 		color: #333;
+	}
+
+	.remove-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ccc;
+		border-radius: 4px;
+		transition: background-color 0.15s, color 0.15s;
+		flex-shrink: 0;
+	}
+
+	.remove-btn:hover {
+		background-color: #fee;
+		color: #d32f2f;
 	}
 
 	.group-layers {

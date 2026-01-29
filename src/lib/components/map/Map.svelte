@@ -98,21 +98,34 @@
 
 		const state = $layerStore;
 
-		// Add background layers first (bottom of stack)
-		state.backgroundLayers.forEach((layer) => {
+		// Add background layers first (bottom of stack, z-index 0 to bgCount-1)
+		state.backgroundLayers.forEach((layer, idx) => {
 			const olLayer = layer.olLayer;
 			if (olLayer && !map!.getLayers().getArray().includes(olLayer)) {
+				olLayer.setZIndex(idx);
 				map!.addLayer(olLayer);
 			}
 		});
 
-		// Add overlay layers on top
+		// Count total overlay layers for z-index calculation
+		let totalOverlayLayers = 0;
+		state.overlayGroups.forEach((group) => {
+			totalOverlayLayers += group.layers.length;
+		});
+
+		// Add overlay layers with z-indices
+		// First group (top of list in UI) gets highest z-index (on top in map)
+		const bgCount = state.backgroundLayers.length;
+		let zIndex = bgCount + totalOverlayLayers - 1;
+
 		state.overlayGroups.forEach((group) => {
 			group.layers.forEach((layer) => {
 				const olLayer = layer.olLayer;
 				if (olLayer && !map!.getLayers().getArray().includes(olLayer)) {
+					olLayer.setZIndex(zIndex);
 					map!.addLayer(olLayer);
 				}
+				zIndex--;
 			});
 		});
 	}

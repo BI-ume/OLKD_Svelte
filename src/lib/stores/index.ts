@@ -32,3 +32,11 @@ export {
 	bestMatch
 } from './searchStore';
 export type { SearchResult, ParsedSearchResult } from './searchStore';
+
+export {
+	catalogStore,
+	catalogItems,
+	catalogIsOpen,
+	catalogIsLoading
+} from './catalogStore';
+export type { CatalogItem } from './catalogStore';

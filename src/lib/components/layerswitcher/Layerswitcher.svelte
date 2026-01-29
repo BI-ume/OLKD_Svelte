@@ -1,11 +1,15 @@
 <script lang="ts">
-	import { layerStore, backgroundLayers, overlayGroups, activeBackground } from '$lib/stores';
+	import { layerStore, backgroundLayers, overlayGroups, activeBackground, componentsConfig } from '$lib/stores';
 	import type { Layer } from '$lib/layers/Layer';
 	import BackgroundSelector from './BackgroundSelector.svelte';
 	import LayerGroup from './LayerGroup.svelte';
 	import LayerItem from './LayerItem.svelte';
+	import Catalog from '$lib/components/controls/Catalog.svelte';
 
-	let collapsed = false;
+	let collapsed = $state(false);
+	let draggedGroupName = $state<string | null>(null);
+	let dropTargetIndex = $state<number | null>(null);
+	let groupsWithOpenSlider = $state<Set<string>>(new Set());
 
 	function toggleCollapsed() {
 		collapsed = !collapsed;
@@ -15,17 +19,92 @@
 		layerStore.setActiveBackground(event.detail);
 	}
 
-	$: backgrounds = $backgroundLayers;
-	$: overlays = $overlayGroups;
-	$: activeBackgroundLayer = $activeBackground;
-	$: showBackgrounds = backgrounds.length > 1;
-	$: showOverlays = overlays.length > 0;
+	function handleRemoveGroup(name: string) {
+		layerStore.removeGroup(name);
+	}
+
+	function handleSliderToggle(groupName: string, isOpen: boolean) {
+		if (isOpen) {
+			groupsWithOpenSlider = new Set([...groupsWithOpenSlider, groupName]);
+		} else {
+			const newSet = new Set(groupsWithOpenSlider);
+			newSet.delete(groupName);
+			groupsWithOpenSlider = newSet;
+		}
+	}
+
+	// --- Drag & Drop ---
+	function handleDragStart(e: DragEvent, groupName: string) {
+		draggedGroupName = groupName;
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = 'move';
+			e.dataTransfer.setData('text/plain', groupName);
+		}
+	}
+
+	function handleDragOver(e: DragEvent, index: number) {
+		e.preventDefault();
+		if (e.dataTransfer) {
+			e.dataTransfer.dropEffect = 'move';
+		}
+		dropTargetIndex = index;
+	}
+
+	function handleDragLeave() {
+		dropTargetIndex = null;
+	}
+
+	function handleDrop(e: DragEvent, targetIndex: number) {
+		e.preventDefault();
+		dropTargetIndex = null;
+
+		if (!draggedGroupName) return;
+
+		const visibleGroups = overlays.filter((g) => g.showGroup !== false);
+		const draggedIndex = visibleGroups.findIndex((g) => g.name === draggedGroupName);
+		if (draggedIndex === -1 || draggedIndex === targetIndex) return;
+
+		// Build new order from all groups (including hidden ones)
+		const newOrder = [...overlays.map((g) => g.name)];
+		const draggedName = draggedGroupName;
+
+		// Remove from old position
+		const oldIdx = newOrder.indexOf(draggedName);
+		newOrder.splice(oldIdx, 1);
+
+		// Find the insert position based on the visible group at targetIndex
+		const targetGroupName = visibleGroups[targetIndex]?.name;
+		let insertIdx = targetGroupName ? newOrder.indexOf(targetGroupName) : newOrder.length;
+		if (draggedIndex < targetIndex) {
+			insertIdx++;
+		}
+
+		newOrder.splice(insertIdx, 0, draggedName);
+		layerStore.reorderGroups(newOrder);
+		draggedGroupName = null;
+	}
+
+	function handleDragEnd() {
+		draggedGroupName = null;
+		dropTargetIndex = null;
+	}
+
+	let backgrounds = $derived($backgroundLayers);
+	let overlays = $derived($overlayGroups);
+	let activeBackgroundLayer = $derived($activeBackground);
+	let showBackgrounds = $derived(backgrounds.length > 1);
+	let showOverlays = $derived(overlays.length > 0);
+
+	let showCatalog = $derived($componentsConfig?.catalog === true);
+
+	// Visible groups for drag indexing
+	let visibleOverlays = $derived(overlays.filter((g) => g.showGroup !== false));
 </script>
 
 <div class="layerswitcher" class:collapsed>
 	<button
 		class="toggle-btn"
-		on:click={toggleCollapsed}
+		onclick={toggleCollapsed}
 		title={collapsed ? 'Layerswitcher anzeigen' : 'Layerswitcher ausblenden'}
 		aria-expanded={!collapsed}
 	>
@@ -64,24 +143,38 @@
 					<section class="section overlays">
 						<h4 class="section-title">Themen</h4>
 						<div class="overlays-list">
-							{#each overlays as group (group.name)}
-								{#if group.showGroup !== false}
+							{#each visibleOverlays as group, idx (group.name)}
+								<div
+									class="draggable-item"
+									class:dragging={draggedGroupName === group.name}
+									class:drop-above={dropTargetIndex === idx && draggedGroupName !== group.name}
+									draggable={!groupsWithOpenSlider.has(group.name)}
+									ondragstart={(e) => handleDragStart(e, group.name)}
+									ondragover={(e) => handleDragOver(e, idx)}
+									ondragleave={handleDragLeave}
+									ondrop={(e) => handleDrop(e, idx)}
+									ondragend={handleDragEnd}
+									role="listitem"
+								>
 									{#if group.layers.length > 1}
-										<LayerGroup {group} />
+										<LayerGroup {group} onRemove={handleRemoveGroup} onSliderToggle={(isOpen) => handleSliderToggle(group.name, isOpen)} />
 									{:else if group.layers.length === 1}
-										<!-- Single layer in group - show directly -->
-										<LayerItem layer={group.layers[0]} />
+										<LayerItem layer={group.layers[0]} onRemove={() => handleRemoveGroup(group.name)} onSliderToggle={(isOpen) => handleSliderToggle(group.name, isOpen)} />
 									{/if}
-								{/if}
+								</div>
 							{/each}
 						</div>
 					</section>
 				{/if}
 
-				{#if !showBackgrounds && !showOverlays}
+				{#if !showBackgrounds && !showOverlays && !showCatalog}
 					<div class="empty-state">
 						<p>Keine Layer verfügbar</p>
 					</div>
+				{/if}
+
+				{#if showCatalog}
+					<Catalog />
 				{/if}
 			</div>
 		</div>
@@ -184,6 +277,26 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
+	}
+
+	/* Drag & drop styles */
+	.draggable-item {
+		cursor: grab;
+		border-radius: 4px;
+		border: 2px solid transparent;
+		transition: opacity 0.15s, border-color 0.15s;
+	}
+
+	.draggable-item:active {
+		cursor: grabbing;
+	}
+
+	.draggable-item.dragging {
+		opacity: 0.4;
+	}
+
+	.draggable-item.drop-above {
+		border-top-color: #2196f3;
 	}
 
 	.empty-state {

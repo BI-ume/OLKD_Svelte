@@ -10,3 +10,4 @@ export { default as GotoButton } from './GotoButton.svelte';
 export { default as MeasureButton } from './MeasureButton.svelte';
 export { default as SaveSettings } from './SaveSettings.svelte';
 export { default as SearchBox } from './SearchBox.svelte';
+export { default as Catalog } from './Catalog.svelte';

@@ -1,6 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import type { Layer } from '$lib/layers/Layer';
 import type { Group } from '$lib/layers/Group';
+import { mapStore } from './mapStore';
 
 interface LayerState {
 	backgroundLayers: Layer[];
@@ -203,6 +204,131 @@ function createLayerStore() {
 			});
 
 			return allLayers;
+		},
+
+		/**
+		 * Add a group to overlays (e.g. from catalog)
+		 * New group is added at the top of the list (highest z-index)
+		 */
+		addGroup: (group: Group): void => {
+			// Register in lookup maps
+			groupsByName.set(group.name, group);
+			group.layers.forEach((layer) => {
+				layersByName.set(layer.name, layer);
+			});
+
+			// Add OL layers to map with highest z-index (on top)
+			const map = mapStore.getMap();
+			const state = get({ subscribe });
+			if (map) {
+				// Calculate current highest z-index
+				const bgCount = state.backgroundLayers.length;
+				let totalOverlayLayers = 0;
+				state.overlayGroups.forEach((g) => {
+					totalOverlayLayers += g.layers.length;
+				});
+				// New layers go on top
+				let zIndex = bgCount + totalOverlayLayers + group.layers.length - 1;
+
+				group.layers.forEach((layer) => {
+					const olLayer = layer.olLayer;
+					if (!map.getLayers().getArray().includes(olLayer)) {
+						olLayer.setZIndex(zIndex);
+						map.addLayer(olLayer);
+					}
+					zIndex--;
+				});
+			}
+
+			// Add at the beginning of the list (top)
+			update((state) => ({
+				...state,
+				overlayGroups: [group, ...state.overlayGroups]
+			}));
+		},
+
+		/**
+		 * Remove a group from overlays
+		 */
+		removeGroup: (name: string): void => {
+			const group = groupsByName.get(name);
+			if (!group) return;
+
+			// Remove OL layers from map
+			const map = mapStore.getMap();
+			if (map) {
+				group.layers.forEach((layer) => {
+					const olLayer = layer.olLayer;
+					if (map.getLayers().getArray().includes(olLayer)) {
+						map.removeLayer(olLayer);
+					}
+				});
+			}
+
+			// Remove from lookup maps
+			groupsByName.delete(name);
+			group.layers.forEach((layer) => {
+				layersByName.delete(layer.name);
+			});
+
+			// Dispose OL layers
+			group.dispose();
+
+			update((state) => ({
+				...state,
+				overlayGroups: state.overlayGroups.filter((g) => g.name !== name)
+			}));
+		},
+
+		/**
+		 * Reorder overlay groups by name array.
+		 * Also updates OL layer z-indices on the map.
+		 * First group in the array (top of list in UI) gets highest z-index (on top in map).
+		 */
+		reorderGroups: (orderedNames: string[]): void => {
+			update((state) => {
+				const groupMap = new Map(state.overlayGroups.map((g) => [g.name, g]));
+				const reordered: Group[] = [];
+
+				// Place groups in the requested order
+				for (const name of orderedNames) {
+					const group = groupMap.get(name);
+					if (group) {
+						reordered.push(group);
+						groupMap.delete(name);
+					}
+				}
+
+				// Append any remaining groups not in orderedNames
+				for (const group of groupMap.values()) {
+					reordered.push(group);
+				}
+
+				// Update OL layer z-indices on the map
+				// First group (top of list) should have highest z-index (on top in map)
+				const map = mapStore.getMap();
+				if (map) {
+					const bgCount = state.backgroundLayers.length;
+					// Count total overlay layers
+					let totalOverlayLayers = 0;
+					for (const group of reordered) {
+						totalOverlayLayers += group.layers.length;
+					}
+					// Assign z-indices in reverse: first group gets highest
+					let zIndex = bgCount + totalOverlayLayers - 1;
+					for (const group of reordered) {
+						for (const layer of group.layers) {
+							layer.olLayer.setZIndex(zIndex);
+							zIndex--;
+						}
+					}
+				}
+
+				return {
+					...state,
+					overlayGroups: reordered
+				};
+			});
 		},
 
 		/**

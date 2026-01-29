@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
+	import { componentsConfig } from '$lib/stores/configStore';
 	import { searchStore, parseWKT, type SearchResult } from '$lib/stores/searchStore';
+	import { catalogItems, catalogStore } from '$lib/stores/catalogStore';
 	import { Vector as VectorSource } from 'ol/source';
 	import { Vector as VectorLayer } from 'ol/layer';
 	import { Style, Fill, Stroke, Circle as CircleStyle } from 'ol/style';
@@ -12,6 +14,18 @@
 	let inputElement: HTMLInputElement;
 	let isOpen = $state(false);
 	let highlightedIndex = $state(-1);
+
+	// Catalog search integration
+	let searchCatalogEnabled = $derived($componentsConfig?.searchCatalog === true);
+	let catalogMatches = $derived.by(() => {
+		if (!searchCatalogEnabled) return [];
+		const q = $searchStore.query?.toLowerCase() || '';
+		if (q.length < 3) return [];
+		return $catalogItems.filter((item) =>
+			item.title.toLowerCase().includes(q) ||
+			item.abstract.toLowerCase().includes(q)
+		);
+	});
 
 	let map: Map | null = null;
 	let resultSource: VectorSource | null = null;
@@ -194,12 +208,20 @@
 		inputElement?.focus();
 	}
 
+	async function handleCatalogToggle(name: string) {
+		await catalogStore.toggleItem(name);
+	}
+
 	function handleClickOutside(e: MouseEvent) {
 		const target = e.target as HTMLElement;
 		if (!target.closest('.search-box')) {
 			isOpen = false;
 		}
 	}
+
+	let hasAnyResults = $derived(
+		$searchStore.results.length > 0 || catalogMatches.length > 0
+	);
 </script>
 
 <svelte:document onclick={handleClickOutside} />
@@ -243,7 +265,7 @@
 		{/if}
 	</div>
 
-	{#if isOpen && $searchStore.results.length > 0}
+	{#if isOpen && hasAnyResults}
 		<ul
 			id="search-results"
 			class="search-results"
@@ -267,8 +289,33 @@
 					<span class="result-label">{result.label}</span>
 				</li>
 			{/each}
+
+			{#if catalogMatches.length > 0}
+				{#if $searchStore.results.length > 0}
+					<li class="search-section-divider">
+						<span>Katalog</span>
+					</li>
+				{/if}
+				{#each catalogMatches as item (item.name)}
+					<li
+						class="search-result-item catalog-result"
+						class:active={item.active}
+						onmousedown={() => handleCatalogToggle(item.name)}
+					>
+						<svg class="result-icon catalog-icon" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z" />
+						</svg>
+						<span class="result-label">{item.title}</span>
+						{#if item.active}
+							<svg class="check-icon" viewBox="0 0 24 24" width="16" height="16" fill="#2196f3">
+								<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+							</svg>
+						{/if}
+					</li>
+				{/each}
+			{/if}
 		</ul>
-	{:else if isOpen && $searchStore.query.length >= 3 && !$searchStore.isLoading && $searchStore.results.length === 0}
+	{:else if isOpen && $searchStore.query.length >= 3 && !$searchStore.isLoading && !hasAnyResults}
 		<div class="search-no-results">Keine Ergebnisse gefunden</div>
 	{/if}
 
@@ -430,5 +477,38 @@
 	.search-error {
 		color: #dc3545;
 		background: #fff5f5;
+	}
+
+	.search-section-divider {
+		padding: 4px 12px;
+		font-size: 11px;
+		font-weight: 600;
+		color: #999;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		border-top: 1px solid #eee;
+		margin-top: 2px;
+	}
+
+	.catalog-result .result-label {
+		color: #555;
+	}
+
+	.catalog-result.active .result-label {
+		color: #2196f3;
+	}
+
+	.catalog-icon {
+		color: #999;
+		width: 18px;
+		height: 18px;
+	}
+
+	.catalog-result.active .catalog-icon {
+		color: #2196f3;
+	}
+
+	.check-icon {
+		flex-shrink: 0;
 	}
 </style>

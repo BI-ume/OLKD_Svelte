@@ -166,25 +166,22 @@ export interface MapConfig {
 
 // Component toggles configuration
 export interface ComponentsConfig {
-	layerswitcher?: boolean;
 	search?: boolean;
+	zoomControls?: boolean;
+	homeButton?: boolean;
+	geolocation?: boolean;
+	gotoButton?: boolean;
+	measure?: boolean;
+	saveSettings?: boolean;
+	scaleLine?: boolean;
+	overviewmap?: boolean;
+	layerswitcher?: boolean;
+	searchCatalog?: boolean;
+	// Future / not yet configurable
 	legend?: boolean;
 	print?: boolean;
-	permalink?: boolean;
-	geolocation?: boolean;
-	measure?: boolean;
-	draw?: boolean;
 	catalog?: boolean;
 	alkis?: boolean;
-	digitize?: boolean;
-	geoeditor?: boolean;
-	timetable?: boolean;
-	contextMenu?: boolean | string;
-	scale?: boolean;
-	zoom?: boolean;
-	attribution?: boolean;
-	overviewmap?: boolean;
-	mouseposition?: boolean;
 }
 
 // Print configuration

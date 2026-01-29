@@ -9,7 +9,7 @@ from flask import Flask, jsonify, send_from_directory, request, Response
 from flask_cors import CORS
 
 from munimap.layers import load_layers_config, create_anol_layers
-from munimap.app_layers_def import prepare_layers_def
+from munimap.app_layers_def import prepare_layers_def, prepare_catalog_names, prepare_catalog_group_def
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -149,6 +149,54 @@ def create_app(config_path=None):
         except requests.RequestException as e:
             log.error(f"Proxy error for {target_url}: {e}")
             return jsonify({'error': 'Proxy request failed'}), 502
+
+    @app.route('/api/v1/app/<config>/catalog')
+    @app.route('/api/v1/app/catalog')
+    def get_catalog(config=None):
+        """Return catalog-eligible groups for the catalog panel."""
+        try:
+            app_config = load_app_config(
+                config,
+                app.config['APP_CONFIG_DIR']
+            )
+            if not app_config.get('components', {}).get('catalog'):
+                return jsonify({'groups': []})
+
+            groups = prepare_catalog_names(
+                app_config,
+                app.anol_layers,
+                app.layers_config.get('layers', {})
+            )
+            return jsonify({'groups': groups})
+        except Exception as e:
+            log.error(f"Error loading catalog: {e}")
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/v1/app/<config>/catalog/group/<name>')
+    @app.route('/api/v1/app/catalog/group/<name>')
+    def get_catalog_group(config=None, name=None):
+        """Return full group definition for a catalog item."""
+        try:
+            app_config = load_app_config(
+                config,
+                app.config['APP_CONFIG_DIR']
+            )
+            if not app_config.get('components', {}).get('catalog'):
+                return jsonify({'error': 'Catalog not enabled'}), 404
+
+            group_def = prepare_catalog_group_def(
+                name,
+                app_config,
+                app.anol_layers,
+                app.layers_config.get('layers', {})
+            )
+            if group_def is None:
+                return jsonify({'error': f'Group "{name}" not found in catalog'}), 404
+
+            return jsonify({'group': group_def})
+        except Exception as e:
+            log.error(f"Error loading catalog group: {e}")
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/health')
     def health():

@@ -5,7 +5,7 @@
 	import { initializeLayers } from '$lib/layers';
 	import { Map } from '$lib/components/map';
 	import { Layerswitcher } from '$lib/components/layerswitcher';
-	import { 
+	import {
 		ZoomControls,
 		ScaleLine,
 		Attribution,
@@ -17,7 +17,7 @@
 		GotoButton,
 		MeasureButton,
 		SaveSettings,
-		SearchBox 
+		SearchBox
 	} from '$lib/components/controls';
 
 	// Get config ID from route parameter
@@ -56,11 +56,17 @@
 		}
 	});
 
-	// Check which components are enabled
-	let showLayerswitcher = $derived($componentsConfig?.layerswitcher !== false);
-	let showScaleLine = $derived($componentsConfig?.scale !== false);
+	// Check which components are enabled (default to true unless explicitly disabled)
+	let showSearch = $derived($componentsConfig?.search !== false);
+	let showZoomControls = $derived($componentsConfig?.zoomControls !== false);
+	let showHomeButton = $derived($componentsConfig?.homeButton !== false);
 	let showGeolocation = $derived($componentsConfig?.geolocation !== false);
+	let showGotoButton = $derived($componentsConfig?.gotoButton !== false);
+	let showMeasure = $derived($componentsConfig?.measure !== false);
+	let showSaveSettings = $derived($componentsConfig?.saveSettings !== false);
+	let showScaleLine = $derived($componentsConfig?.scaleLine !== false);
 	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false);
+	let showLayerswitcher = $derived($componentsConfig?.layerswitcher !== false);
 </script>
 
 <div class="map-app">
@@ -79,15 +85,27 @@
 		<Map />
 		<UrlSync />
 		<ContextMenu />
-		<SearchBox />
-		<ZoomControls />
-		<HomeButton />
+		{#if showSearch}
+			<SearchBox />
+		{/if}
+		{#if showZoomControls}
+			<ZoomControls />
+		{/if}
+		{#if showHomeButton}
+			<HomeButton />
+		{/if}
 		{#if showGeolocation}
 			<Geolocation />
 		{/if}
-		<GotoButton />
-		<MeasureButton />
-		<SaveSettings />
+		{#if showGotoButton}
+			<GotoButton />
+		{/if}
+		{#if showMeasure}
+			<MeasureButton />
+		{/if}
+		{#if showSaveSettings}
+			<SaveSettings />
+		{/if}
 		{#if showScaleLine}
 			<ScaleLine />
 		{/if}

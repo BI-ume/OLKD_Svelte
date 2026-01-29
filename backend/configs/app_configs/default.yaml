@@ -48,16 +48,17 @@ layers:
 
 components:
     search: true
-    print: true
-    layerswitcher: true
-    legend: true
+    zoomControls: true
+    homeButton: true
     geolocation: true
+    gotoButton: true
+    measure: true
+    saveSettings: true
     scaleLine: true
     overviewmap: true
-    saveSettings: false
-    alkis: false 
-    measureLabelSegments: true
-    #searchDropdown: true
+    layerswitcher: true
+    catalog: true
+    searchCatalog: true
 
 searchConfig:
     - name: adress_search

@@ -6,10 +6,9 @@
 	interface Props {
 		group: Group;
 		onRemove?: (name: string) => void;
-		onSliderToggle?: (isOpen: boolean) => void;
 	}
 
-	let { group, onRemove, onSliderToggle }: Props = $props();
+	let { group, onRemove }: Props = $props();
 
 	let expanded = $state(!group.collapsed);
 
@@ -97,7 +96,7 @@
 	{#if expanded}
 		<div class="group-layers">
 			{#each group.layers as layer (layer.name)}
-				<LayerItem {layer} indented {onSliderToggle} />
+				<LayerItem {layer} indented />
 			{/each}
 		</div>
 	{/if}

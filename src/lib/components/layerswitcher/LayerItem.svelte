@@ -7,10 +7,9 @@
 		indented?: boolean;
 		showOpacity?: boolean;
 		onRemove?: () => void;
-		onSliderToggle?: (isOpen: boolean) => void;
 	}
 
-	let { layer, indented = false, showOpacity = true, onRemove, onSliderToggle }: Props = $props();
+	let { layer, indented = false, showOpacity = true, onRemove }: Props = $props();
 
 	let showSlider = $state(false);
 
@@ -26,7 +25,6 @@
 
 	function toggleSlider() {
 		showSlider = !showSlider;
-		onSliderToggle?.(showSlider);
 	}
 
 	// Subscribe to layerStore to trigger reactivity when layer state changes
@@ -99,7 +97,19 @@
 	</div>
 
 	{#if showSlider && visible}
-		<div class="opacity-slider-row">
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="opacity-slider-row"
+			onmousedown={() => {
+				(window as any).__sliderDragging = true;
+			}}
+			onmouseup={() => {
+				(window as any).__sliderDragging = false;
+			}}
+			onmouseleave={() => {
+				(window as any).__sliderDragging = false;
+			}}
+		>
 			<input
 				type="range"
 				min="0"

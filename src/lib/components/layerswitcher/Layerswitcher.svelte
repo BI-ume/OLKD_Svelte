@@ -9,7 +9,6 @@
 	let collapsed = $state(false);
 	let draggedGroupName = $state<string | null>(null);
 	let dropTargetIndex = $state<number | null>(null);
-	let groupsWithOpenSlider = $state<Set<string>>(new Set());
 
 	function toggleCollapsed() {
 		collapsed = !collapsed;
@@ -23,18 +22,15 @@
 		layerStore.removeGroup(name);
 	}
 
-	function handleSliderToggle(groupName: string, isOpen: boolean) {
-		if (isOpen) {
-			groupsWithOpenSlider = new Set([...groupsWithOpenSlider, groupName]);
-		} else {
-			const newSet = new Set(groupsWithOpenSlider);
-			newSet.delete(groupName);
-			groupsWithOpenSlider = newSet;
-		}
-	}
-
 	// --- Drag & Drop ---
 	function handleDragStart(e: DragEvent, groupName: string) {
+		// Cancel drag if slider is being interacted with
+		if ((window as any).__sliderDragging) {
+			e.preventDefault();
+			(window as any).__sliderDragging = false;
+			return;
+		}
+
 		draggedGroupName = groupName;
 		if (e.dataTransfer) {
 			e.dataTransfer.effectAllowed = 'move';
@@ -148,7 +144,7 @@
 									class="draggable-item"
 									class:dragging={draggedGroupName === group.name}
 									class:drop-above={dropTargetIndex === idx && draggedGroupName !== group.name}
-									draggable={!groupsWithOpenSlider.has(group.name)}
+									draggable="true"
 									ondragstart={(e) => handleDragStart(e, group.name)}
 									ondragover={(e) => handleDragOver(e, idx)}
 									ondragleave={handleDragLeave}
@@ -157,9 +153,9 @@
 									role="listitem"
 								>
 									{#if group.layers.length > 1}
-										<LayerGroup {group} onRemove={handleRemoveGroup} onSliderToggle={(isOpen) => handleSliderToggle(group.name, isOpen)} />
+										<LayerGroup {group} onRemove={handleRemoveGroup} />
 									{:else if group.layers.length === 1}
-										<LayerItem layer={group.layers[0]} onRemove={() => handleRemoveGroup(group.name)} onSliderToggle={(isOpen) => handleSliderToggle(group.name, isOpen)} />
+										<LayerItem layer={group.layers[0]} onRemove={() => handleRemoveGroup(group.name)} />
 									{/if}
 								</div>
 							{/each}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { catalogStore, catalogItems, catalogIsLoading } from '$lib/stores/catalogStore';
+	import { catalogStore, catalogItems, catalogIsLoading, metadataPopupStore } from '$lib/stores';
 	import { configStore } from '$lib/stores/configStore';
 
 	let isOpen = $state(false);
@@ -17,6 +17,10 @@
 
 	async function handleToggleItem(name: string) {
 		await catalogStore.toggleItem(name);
+	}
+
+	function handleMetadataClick(url: string, title: string) {
+		metadataPopupStore.open(url, title);
 	}
 
 	let filteredItems = $derived(
@@ -100,17 +104,15 @@
 								</div>
 							</button>
 							{#if item.metadataUrl}
-								<a
-									href={item.metadataUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="metadata-link"
+								<button
+									class="metadata-btn"
+									onclick={() => handleMetadataClick(item.metadataUrl!, item.title)}
 									title="Metadaten"
 								>
 									<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
 										<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
 									</svg>
-								</a>
+								</button>
 							{/if}
 						</li>
 					{/each}
@@ -261,20 +263,27 @@
 		font-size: 11px;
 		color: #888;
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
 
-	.metadata-link {
+	.metadata-btn {
 		flex-shrink: 0;
 		color: #999;
 		padding: 5px 2px;
 		display: flex;
 		align-items: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		border-radius: 4px;
+		transition: color 0.15s, background-color 0.15s;
 	}
 
-	.metadata-link:hover {
+	.metadata-btn:hover {
 		color: #2196f3;
+		background-color: #f0f0f0;
 	}
 </style>

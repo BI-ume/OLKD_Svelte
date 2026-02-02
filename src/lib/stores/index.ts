@@ -40,3 +40,10 @@ export {
 	catalogIsLoading
 } from './catalogStore';
 export type { CatalogItem } from './catalogStore';
+
+export {
+	metadataPopupStore,
+	metadataPopupIsOpen,
+	metadataPopupUrl,
+	metadataPopupTitle
+} from './metadataPopupStore';

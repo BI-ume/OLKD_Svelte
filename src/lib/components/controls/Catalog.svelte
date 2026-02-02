@@ -24,14 +24,23 @@
 	}
 
 	let filteredItems = $derived(
-		$catalogItems.filter((item) => {
-			if (!filter) return true;
-			const q = filter.toLowerCase();
-			return (
-				item.title.toLowerCase().includes(q) ||
-				item.abstract.toLowerCase().includes(q)
-			);
-		})
+		$catalogItems
+			.filter((item) => {
+				if (!filter) return true;
+				const q = filter.toLowerCase();
+				return (
+					item.title.toLowerCase().includes(q) ||
+					item.abstract.toLowerCase().includes(q)
+				);
+			})
+			.sort((a, b) => {
+				// First sort by active state (active items first)
+				if (a.active !== b.active) {
+					return a.active ? -1 : 1;
+				}
+				// Then sort alphabetically by title
+				return a.title.localeCompare(b.title, 'de');
+			})
 	);
 </script>
 

@@ -10,6 +10,7 @@
 	let collapsed = $state(false);
 	let draggedGroupName = $state<string | null>(null);
 	let dropTargetIndex = $state<number | null>(null);
+	let dropPosition = $state<'above' | 'below'>('above');
 
 	function toggleCollapsed() {
 		collapsed = !collapsed;
@@ -45,21 +46,35 @@
 			e.dataTransfer.dropEffect = 'move';
 		}
 		dropTargetIndex = index;
+
+		// Determine if dropping above or below based on mouse position
+		const target = e.currentTarget as HTMLElement;
+		const rect = target.getBoundingClientRect();
+		const midpoint = rect.top + rect.height / 2;
+		dropPosition = e.clientY < midpoint ? 'above' : 'below';
 	}
 
 	function handleDragLeave() {
 		dropTargetIndex = null;
+		dropPosition = 'above';
 	}
 
 	function handleDrop(e: DragEvent, targetIndex: number) {
 		e.preventDefault();
+		const currentDropPosition = dropPosition;
 		dropTargetIndex = null;
+		dropPosition = 'above';
 
 		if (!draggedGroupName) return;
 
 		const visibleGroups = overlays.filter((g) => g.showGroup !== false);
 		const draggedIndex = visibleGroups.findIndex((g) => g.name === draggedGroupName);
-		if (draggedIndex === -1 || draggedIndex === targetIndex) return;
+		if (draggedIndex === -1) return;
+
+		// Don't do anything if dropping on same position
+		if (draggedIndex === targetIndex) return;
+		if (currentDropPosition === 'below' && draggedIndex === targetIndex + 1) return;
+		if (currentDropPosition === 'above' && draggedIndex === targetIndex - 1) return;
 
 		// Build new order from all groups (including hidden ones)
 		const newOrder = [...overlays.map((g) => g.name)];
@@ -72,7 +87,9 @@
 		// Find the insert position based on the visible group at targetIndex
 		const targetGroupName = visibleGroups[targetIndex]?.name;
 		let insertIdx = targetGroupName ? newOrder.indexOf(targetGroupName) : newOrder.length;
-		if (draggedIndex < targetIndex) {
+
+		// Adjust insert position based on drop position
+		if (currentDropPosition === 'below') {
 			insertIdx++;
 		}
 
@@ -84,6 +101,7 @@
 	function handleDragEnd() {
 		draggedGroupName = null;
 		dropTargetIndex = null;
+		dropPosition = 'above';
 	}
 
 	let backgrounds = $derived($backgroundLayers);
@@ -144,7 +162,8 @@
 								<div
 									class="draggable-item"
 									class:dragging={draggedGroupName === group.name}
-									class:drop-above={dropTargetIndex === idx && draggedGroupName !== group.name}
+									class:drop-above={dropTargetIndex === idx && draggedGroupName !== group.name && dropPosition === 'above'}
+									class:drop-below={dropTargetIndex === idx && draggedGroupName !== group.name && dropPosition === 'below'}
 									draggable="true"
 									ondragstart={(e) => handleDragStart(e, group.name)}
 									ondragover={(e) => handleDragOver(e, idx)}
@@ -302,6 +321,10 @@
 
 	.draggable-item.drop-above {
 		border-top-color: #2196f3;
+	}
+
+	.draggable-item.drop-below {
+		border-bottom-color: #2196f3;
 	}
 
 	.empty-state {

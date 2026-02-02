@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Layer } from '$lib/layers/Layer';
-	import { layerStore } from '$lib/stores/layerStore';
+	import { layerStore, metadataPopupStore } from '$lib/stores';
 
 	interface Props {
 		layer: Layer;
@@ -11,6 +11,7 @@
 
 	let { layer, indented = false, showOpacity = true, onRemove }: Props = $props();
 
+	let showMenu = $state(false);
 	let showSlider = $state(false);
 
 	function toggleVisibility() {
@@ -23,8 +24,34 @@
 		layerStore.setLayerOpacity(layer.name, opacity);
 	}
 
+	function toggleMenu() {
+		showMenu = !showMenu;
+		if (!showMenu) {
+			showSlider = false;
+		}
+	}
+
+	function closeMenu() {
+		showMenu = false;
+		showSlider = false;
+	}
+
 	function toggleSlider() {
 		showSlider = !showSlider;
+	}
+
+	function handleInfo() {
+		if (layer.metadataUrl) {
+			metadataPopupStore.open(layer.metadataUrl, layer.title);
+		}
+		closeMenu();
+	}
+
+	function handleRemove() {
+		if (onRemove) {
+			onRemove();
+		}
+		closeMenu();
 	}
 
 	// Subscribe to layerStore to trigger reactivity when layer state changes
@@ -36,7 +63,20 @@
 		void $layerStore; // Create dependency on store
 		return Math.round(layer.opacity * 100);
 	});
+
+	let hasMetadata = $derived(!!layer.metadataUrl);
+	let hasMenuItems = $derived(hasMetadata || showOpacity || !!onRemove);
+
+	let menuContainer: HTMLDivElement;
+
+	function handleWindowClick(e: MouseEvent) {
+		if (showMenu && menuContainer && !menuContainer.contains(e.target as Node)) {
+			closeMenu();
+		}
+	}
 </script>
+
+<svelte:window onclick={handleWindowClick} />
 
 <div class="layer-item" class:indented>
 	<div class="layer-row">
@@ -62,64 +102,83 @@
 				{/if}
 			</span>
 		</button>
-		<span class="layer-title" class:visible title="{layer.title}">{layer.title}</span>
+		<span class="layer-title" class:visible title={layer.title}>{layer.title}</span>
 
-		{#if showOpacity && visible}
-			<button
-				class="opacity-toggle"
-				class:active={opacity !== 100}
-				class:opened={showSlider}
-				onclick={toggleSlider}
-				title="Transparenz einstellen"
-			>
-				<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="10" opacity="0.3"></circle>
-					<path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" stroke="none"></path>
-				</svg>
-				{#if showSlider}
-					<span class="opacity-value">{opacity}%</span>
+		{#if hasMenuItems && visible}
+			<div class="menu-container" bind:this={menuContainer}>
+				<button
+					class="menu-btn"
+					class:active={showMenu}
+					onclick={toggleMenu}
+					title="Mehr Optionen"
+					aria-label="Mehr Optionen"
+					aria-expanded={showMenu}
+				>
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+					</svg>
+				</button>
+
+				{#if showMenu}
+					<div class="menu-dropdown">
+						{#if hasMetadata}
+							<button class="menu-item" onclick={handleInfo}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+									<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+								</svg>
+								<span>Info</span>
+							</button>
+						{/if}
+
+						{#if showOpacity}
+							<button class="menu-item" class:active={showSlider} onclick={toggleSlider}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="10" opacity="0.3"></circle>
+									<path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" stroke="none"></path>
+								</svg>
+								<span>Transparenz</span>
+								<span class="opacity-value">{opacity}%</span>
+							</button>
+
+							{#if showSlider}
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<div
+									class="slider-row"
+									onmousedown={() => {
+										(window as any).__sliderDragging = true;
+									}}
+									onmouseup={() => {
+										(window as any).__sliderDragging = false;
+									}}
+									onmouseleave={() => {
+										(window as any).__sliderDragging = false;
+									}}
+								>
+									<input
+										type="range"
+										min="0"
+										max="100"
+										value={opacity}
+										oninput={handleOpacityChange}
+										class="opacity-slider"
+									/>
+								</div>
+							{/if}
+						{/if}
+
+						{#if onRemove}
+							<button class="menu-item remove" onclick={handleRemove}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+									<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+								</svg>
+								<span>Entfernen</span>
+							</button>
+						{/if}
+					</div>
 				{/if}
-			</button>
-		{/if}
-
-		{#if onRemove}
-			<button
-				class="remove-btn"
-				onclick={onRemove}
-				title="Thema entfernen"
-				aria-label="{layer.title} entfernen"
-			>
-				<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-					<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-				</svg>
-			</button>
+			</div>
 		{/if}
 	</div>
-
-	{#if showSlider && visible}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="opacity-slider-row"
-			onmousedown={() => {
-				(window as any).__sliderDragging = true;
-			}}
-			onmouseup={() => {
-				(window as any).__sliderDragging = false;
-			}}
-			onmouseleave={() => {
-				(window as any).__sliderDragging = false;
-			}}
-		>
-			<input
-				type="range"
-				min="0"
-				max="100"
-				value={opacity}
-				oninput={handleOpacityChange}
-				class="opacity-slider"
-			/>
-		</div>
-	{/if}
 </div>
 
 <style>
@@ -133,7 +192,7 @@
 
 	.layer-row {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: 6px;
 	}
 
@@ -172,9 +231,8 @@
 		transition: color 0.15s;
 		user-select: none;
 		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		line-height: 1.4;
+		padding-top: 2px;
 	}
 
 	.layer-title.visible {
@@ -182,44 +240,94 @@
 		font-weight: 500;
 	}
 
-	.opacity-toggle {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		background: none;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		padding: 2px 6px;
-		cursor: pointer;
-		color: #666;
-		font-size: 11px;
-		transition: all 0.15s;
+	.menu-container {
+		position: relative;
 		flex-shrink: 0;
 	}
 
-	.opacity-toggle:hover {
-		background: #f0f0f0;
-		border-color: #ccc;
+	.menu-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #999;
+		border-radius: 4px;
+		transition: background-color 0.15s, color 0.15s;
 	}
 
-	.opacity-toggle.active {
+	.menu-btn:hover {
+		background-color: #f0f0f0;
+		color: #666;
+	}
+
+	.menu-btn.active {
+		background-color: #e8f4fc;
 		color: #2196f3;
 	}
 
-	.opacity-toggle.opened {
-		background: #e8f4fc;
-		border-color: #2196f3;
+	.menu-dropdown {
+		position: absolute;
+		top: 100%;
+		right: 0;
+		margin-top: 4px;
+		background: white;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		min-width: 160px;
+		z-index: 100;
+		overflow: hidden;
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		padding: 8px 12px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 13px;
+		color: #333;
+		text-align: left;
+		transition: background-color 0.1s;
+	}
+
+	.menu-item:hover {
+		background-color: #f5f5f5;
+	}
+
+	.menu-item.active {
+		background-color: #e8f4fc;
+	}
+
+	.menu-item.remove:hover {
+		background-color: #fee;
+		color: #d32f2f;
+	}
+
+	.menu-item svg {
+		flex-shrink: 0;
+	}
+
+	.menu-item span:first-of-type {
+		flex: 1;
 	}
 
 	.opacity-value {
-		min-width: 28px;
+		font-size: 11px;
+		color: #666;
+		min-width: 32px;
 		text-align: right;
 	}
 
-	.opacity-slider-row {
-		margin-top: 6px;
-		margin-left: 26px;
-		padding-right: 4px;
+	.slider-row {
+		padding: 8px 12px;
+		border-top: 1px solid #f0f0f0;
 	}
 
 	.opacity-slider {
@@ -234,7 +342,7 @@
 	}
 
 	.opacity-slider::-webkit-slider-thumb {
-		--size: 20px;
+		--size: 16px;
 		-webkit-appearance: none;
 		appearance: none;
 		width: var(--size);
@@ -270,24 +378,5 @@
 		height: 4px;
 		border-radius: 2px;
 		background: #ddd;
-	}
-
-	.remove-btn {
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 2px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #ccc;
-		border-radius: 4px;
-		transition: background-color 0.15s, color 0.15s;
-		flex-shrink: 0;
-	}
-
-	.remove-btn:hover {
-		background-color: #fee;
-		color: #d32f2f;
 	}
 </style>

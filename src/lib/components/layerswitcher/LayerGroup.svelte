@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Group } from '$lib/layers/Group';
-	import { layerStore } from '$lib/stores/layerStore';
+	import { layerStore, metadataPopupStore } from '$lib/stores';
 	import LayerItem from './LayerItem.svelte';
 
 	interface Props {
@@ -11,6 +11,7 @@
 	let { group, onRemove }: Props = $props();
 
 	let expanded = $state(!group.collapsed);
+	let showMenu = $state(false);
 
 	function toggleExpanded() {
 		expanded = !expanded;
@@ -21,10 +22,26 @@
 		layerStore.toggleGroupVisibility(group.name);
 	}
 
+	function toggleMenu() {
+		showMenu = !showMenu;
+	}
+
+	function closeMenu() {
+		showMenu = false;
+	}
+
+	function handleInfo() {
+		if (group.metadataUrl) {
+			metadataPopupStore.open(group.metadataUrl, group.title);
+		}
+		closeMenu();
+	}
+
 	function handleRemove() {
 		if (onRemove) {
 			onRemove(group.name);
 		}
+		closeMenu();
 	}
 
 	// Subscribe to layerStore to trigger reactivity when layer state changes
@@ -32,7 +49,20 @@
 		void $layerStore; // Create dependency on store
 		return group.layers.some((l) => l.visible);
 	});
+
+	let hasMetadata = $derived(!!group.metadataUrl);
+	let hasMenuItems = $derived(hasMetadata || !!onRemove);
+
+	let menuContainer: HTMLDivElement;
+
+	function handleWindowClick(e: MouseEvent) {
+		if (showMenu && menuContainer && !menuContainer.contains(e.target as Node)) {
+			closeMenu();
+		}
+	}
 </script>
+
+<svelte:window onclick={handleWindowClick} />
 
 <div class="layer-group">
 	<div class="group-header">
@@ -79,17 +109,43 @@
 			<span class="group-title">{group.title}</span>
 		</button>
 
-		{#if onRemove}
-			<button
-				class="remove-btn"
-				onclick={handleRemove}
-				title="Thema entfernen"
-				aria-label="{group.title} entfernen"
-			>
-				<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-					<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-				</svg>
-			</button>
+		{#if hasMenuItems}
+			<div class="menu-container" bind:this={menuContainer}>
+				<button
+					class="menu-btn"
+					class:active={showMenu}
+					onclick={toggleMenu}
+					title="Mehr Optionen"
+					aria-label="Mehr Optionen"
+					aria-expanded={showMenu}
+				>
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+					</svg>
+				</button>
+
+				{#if showMenu}
+					<div class="menu-dropdown">
+						{#if hasMetadata}
+							<button class="menu-item" onclick={handleInfo}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+									<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+								</svg>
+								<span>Info</span>
+							</button>
+						{/if}
+
+						{#if onRemove}
+							<button class="menu-item remove" onclick={handleRemove}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+									<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+								</svg>
+								<span>Entfernen</span>
+							</button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 		{/if}
 	</div>
 
@@ -109,7 +165,7 @@
 
 	.group-header {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: 4px;
 	}
 
@@ -126,6 +182,7 @@
 		transition:
 			background-color 0.15s,
 			transform 0.2s;
+		flex-shrink: 0;
 	}
 
 	.expand-btn:hover {
@@ -151,6 +208,7 @@
 		color: #666;
 		border-radius: 4px;
 		transition: background-color 0.15s;
+		flex-shrink: 0;
 	}
 
 	.visibility-btn:hover {
@@ -187,9 +245,15 @@
 		font-size: 14px;
 		font-weight: 600;
 		color: #333;
+		line-height: 1.4;
 	}
 
-	.remove-btn {
+	.menu-container {
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.menu-btn {
 		background: none;
 		border: none;
 		cursor: pointer;
@@ -197,15 +261,61 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: #ccc;
+		color: #999;
 		border-radius: 4px;
 		transition: background-color 0.15s, color 0.15s;
-		flex-shrink: 0;
 	}
 
-	.remove-btn:hover {
+	.menu-btn:hover {
+		background-color: #f0f0f0;
+		color: #666;
+	}
+
+	.menu-btn.active {
+		background-color: #e8f4fc;
+		color: #2196f3;
+	}
+
+	.menu-dropdown {
+		position: absolute;
+		top: 100%;
+		right: 0;
+		margin-top: 4px;
+		background: white;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		min-width: 140px;
+		z-index: 100;
+		overflow: hidden;
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		padding: 8px 12px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 13px;
+		color: #333;
+		text-align: left;
+		transition: background-color 0.1s;
+	}
+
+	.menu-item:hover {
+		background-color: #f5f5f5;
+	}
+
+	.menu-item.remove:hover {
 		background-color: #fee;
 		color: #d32f2f;
+	}
+
+	.menu-item svg {
+		flex-shrink: 0;
 	}
 
 	.group-layers {

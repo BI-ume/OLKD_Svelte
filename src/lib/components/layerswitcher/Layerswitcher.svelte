@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { layerStore, backgroundLayers, overlayGroups, activeBackground, componentsConfig } from '$lib/stores';
+	import { layerStore, backgroundLayers, overlayGroups, activeBackground, componentsConfig, metadataPopupStore, metadataPopupIsOpen, metadataPopupUrl, metadataPopupTitle } from '$lib/stores';
 	import type { Layer } from '$lib/layers/Layer';
 	import BackgroundSelector from './BackgroundSelector.svelte';
 	import LayerGroup from './LayerGroup.svelte';
 	import LayerItem from './LayerItem.svelte';
 	import Catalog from '$lib/components/controls/Catalog.svelte';
+	import MetadataPopup from './MetadataPopup.svelte';
 
 	let collapsed = $state(false);
 	let draggedGroupName = $state<string | null>(null);
@@ -176,6 +177,14 @@
 		</div>
 	{/if}
 </div>
+
+{#if $metadataPopupIsOpen}
+	<MetadataPopup
+		url={$metadataPopupUrl}
+		title={$metadataPopupTitle}
+		onClose={() => metadataPopupStore.close()}
+	/>
+{/if}
 
 <style>
 	.layerswitcher {

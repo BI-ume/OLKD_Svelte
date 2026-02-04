@@ -30,6 +30,7 @@ map:
 backgrounds:
     explicit:
         - stadtplan_bi
+        - luftbilder_bi
 
 # Include overlay groups (override their inactive status)
 groups:

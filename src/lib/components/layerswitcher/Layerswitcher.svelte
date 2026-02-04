@@ -8,12 +8,17 @@
 	import MetadataPopup from './MetadataPopup.svelte';
 
 	let collapsed = $state(false);
+	let backgroundsCollapsed = $state(true);
 	let draggedGroupName = $state<string | null>(null);
 	let dropTargetIndex = $state<number | null>(null);
 	let dropPosition = $state<'above' | 'below'>('above');
 
 	function toggleCollapsed() {
 		collapsed = !collapsed;
+	}
+
+	function toggleBackgrounds() {
+		backgroundsCollapsed = !backgroundsCollapsed;
 	}
 
 	function handleBackgroundChange(event: CustomEvent<Layer>) {
@@ -145,12 +150,31 @@
 			<div class="layerswitcher-body">
 				{#if showBackgrounds}
 					<section class="section backgrounds">
-						<h4 class="section-title">Hintergrund</h4>
-						<BackgroundSelector
-							layers={backgrounds}
-							activeLayer={activeBackgroundLayer}
-							on:change={handleBackgroundChange}
-						/>
+						<button
+							class="section-header"
+							onclick={toggleBackgrounds}
+							aria-expanded={!backgroundsCollapsed}
+						>
+							<svg
+								class="section-chevron"
+								class:collapsed={backgroundsCollapsed}
+								viewBox="0 0 24 24"
+								width="16"
+								height="16"
+								fill="currentColor"
+							>
+								<path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+							</svg>
+							<h4 class="section-title">Hintergrund</h4>
+							<span class="active-background-name">{activeBackgroundLayer?.title}</span>
+						</button>
+						{#if !backgroundsCollapsed}
+							<BackgroundSelector
+								layers={backgrounds}
+								activeLayer={activeBackgroundLayer}
+								on:change={handleBackgroundChange}
+							/>
+						{/if}
 					</section>
 				{/if}
 
@@ -288,13 +312,51 @@
 		margin-bottom: 0;
 	}
 
+	.section-header {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		width: 100%;
+		padding: 8px 4px;
+		margin: -4px -4px 4px -4px;
+		background: none;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.section-header:hover {
+		background-color: #f5f5f5;
+	}
+
+	.section-chevron {
+		flex-shrink: 0;
+		color: #666;
+		transition: transform 0.2s ease;
+	}
+
+	.section-chevron.collapsed {
+		transform: rotate(-90deg);
+	}
+
 	.section-title {
-		margin: 0 0 8px 0;
+		margin: 0;
 		font-size: 12px;
 		font-weight: 600;
 		color: #666;
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
+	}
+
+	.active-background-name {
+		margin-left: auto;
+		font-size: 11px;
+		color: #999;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 120px;
 	}
 
 	.overlays-list {

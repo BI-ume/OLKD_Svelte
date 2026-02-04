@@ -43,6 +43,16 @@
 	});
 
 	/**
+	 * Parse a layer entry from URL (format: "layerName" or "layerName:opacity")
+	 */
+	function parseLayerEntry(entry: string): { name: string; opacity: number } {
+		const parts = entry.split(':');
+		const name = parts[0];
+		const opacity = parts.length > 1 ? parseInt(parts[1], 10) : 100;
+		return { name, opacity: isNaN(opacity) ? 100 : opacity };
+	}
+
+	/**
 	 * Parse URL parameters and apply to map/layers
 	 */
 	function initializeFromUrl() {
@@ -69,15 +79,19 @@
 			}
 		}
 
-		// Parse layers parameter: layer1,layer2,...
+		// Parse layers parameter: layer1,layer2:opacity,...
 		if (layersParam) {
-			const layerNames = layersParam.split(',').filter((n) => n.trim());
+			const layerEntries = layersParam.split(',').filter((n) => n.trim());
 
-			if (layerNames.length > 0) {
+			if (layerEntries.length > 0) {
+				// Parse all layer entries
+				const parsedLayers = layerEntries.map(parseLayerEntry);
+
 				// First layer could be a background layer
-				const firstLayer = layerStore.getLayerByName(layerNames[0]);
+				const firstParsed = parsedLayers[0];
+				const firstLayer = layerStore.getLayerByName(firstParsed.name);
 				if (firstLayer?.isBackground) {
-					layerStore.setActiveBackgroundByName(layerNames[0]);
+					layerStore.setActiveBackgroundByName(firstParsed.name);
 				}
 
 				// Hide all overlays first
@@ -88,13 +102,30 @@
 					}
 				});
 
-				// Show specified layers
-				layerNames.forEach((name) => {
+				// Track group order based on first occurrence
+				const groupOrder: string[] = [];
+				const seenGroups = new Set<string>();
+
+				// Show specified layers with their opacities
+				parsedLayers.forEach(({ name, opacity }) => {
 					const layer = layerStore.getLayerByName(name);
 					if (layer && !layer.isBackground) {
 						layerStore.setLayerVisibility(name, true);
+						layerStore.setLayerOpacity(name, opacity / 100);
+
+						// Track group order
+						const group = layerStore.getGroupByLayerName(name);
+						if (group && !seenGroups.has(group.name)) {
+							seenGroups.add(group.name);
+							groupOrder.push(group.name);
+						}
 					}
 				});
+
+				// Reorder groups based on URL layer order
+				if (groupOrder.length > 0) {
+					layerStore.reorderGroups(groupOrder);
+				}
 			}
 		}
 	}
@@ -161,6 +192,17 @@
 	}
 
 	/**
+	 * Format a layer entry for URL (format: "layerName" or "layerName:opacity")
+	 */
+	function formatLayerEntry(layer: { name: string; opacity: number }): string {
+		const opacityPercent = Math.round(layer.opacity * 100);
+		if (opacityPercent === 100) {
+			return layer.name;
+		}
+		return `${layer.name}:${opacityPercent}`;
+	}
+
+	/**
 	 * Update URL with current map state
 	 */
 	function updateUrl() {
@@ -178,19 +220,19 @@
 		const z = Math.round(zoom * 100) / 100;
 		const mapValue = `${z},${x},${y},${projection}`;
 
-		// Build layers parameter
-		const visibleLayers: string[] = [];
+		// Build layers parameter with opacity
+		const layerEntries: string[] = [];
 
 		// Add active background (use get() for one-time read)
 		const currentBg = get(activeBackground);
 		if (currentBg) {
-			visibleLayers.push(currentBg.name);
+			layerEntries.push(currentBg.name);
 		}
 
-		// Add visible overlays
+		// Add visible overlays with opacity (in group order)
 		const overlays = get(visibleOverlayLayers);
 		overlays.forEach((layer) => {
-			visibleLayers.push(layer.name);
+			layerEntries.push(formatLayerEntry(layer));
 		});
 
 		// Build URL manually to avoid encoding commas
@@ -199,8 +241,8 @@
 
 		params.push(`map=${mapValue}`);
 
-		if (visibleLayers.length > 0) {
-			params.push(`layers=${visibleLayers.join(',')}`);
+		if (layerEntries.length > 0) {
+			params.push(`layers=${layerEntries.join(',')}`);
 		}
 
 		// Preserve other existing params (like config)

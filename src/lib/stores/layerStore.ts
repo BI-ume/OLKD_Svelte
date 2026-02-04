@@ -175,6 +175,18 @@ function createLayerStore() {
 		},
 
 		/**
+		 * Get the group that contains a layer by layer name
+		 */
+		getGroupByLayerName: (layerName: string): Group | undefined => {
+			for (const group of groupsByName.values()) {
+				if (group.layers.some((l) => l.name === layerName)) {
+					return group;
+				}
+			}
+			return undefined;
+		},
+
+		/**
 		 * Get all visible overlay layers
 		 */
 		getVisibleOverlayLayers: (): Layer[] => {

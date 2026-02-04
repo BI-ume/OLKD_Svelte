@@ -184,6 +184,13 @@ export interface ComponentsConfig {
 	alkis?: boolean;
 }
 
+// URL sync configuration
+export type UrlSyncMode = 'xyz' | 'map' | 'full';
+
+export interface UrlSyncConfig {
+	mode?: UrlSyncMode;
+}
+
 // Print configuration
 export interface PrintConfig {
 	mode?: string;
@@ -225,6 +232,7 @@ export interface AppConfig {
 	app?: AppHeaderConfig;
 	map?: MapConfig;
 	components?: ComponentsConfig;
+	urlSync?: UrlSyncConfig;
 	printConfig?: PrintConfig;
 	geolocationConfig?: GeolocationConfig;
 	searchConfig?: SearchProviderConfig[];

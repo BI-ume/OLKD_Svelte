@@ -2,8 +2,9 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
-	import { layerStore, activeBackground, visibleOverlayLayers } from '$lib/stores/layerStore';
+	import { layerStore, activeBackground, visibleOverlayLayers, overlayGroups } from '$lib/stores/layerStore';
 	import { configStore } from '$lib/stores/configStore';
+	import type { UrlSyncMode } from '$lib/layers/types';
 
 	// Props
 	interface Props {
@@ -19,9 +20,11 @@
 	let moveEndListener: any = null;
 	let unsubscribeBg: (() => void) | null = null;
 	let unsubscribeOverlay: (() => void) | null = null;
+	let unsubscribeGroups: (() => void) | null = null;
 
-	// Get projection from config
+	// Get config from store
 	let projection = $derived($configStore.app?.map?.projection ?? 'EPSG:25832');
+	let urlSyncMode = $derived<UrlSyncMode>($configStore.app?.urlSync?.mode ?? 'map');
 
 	// Subscribe to map ready state
 	onMount(() => {
@@ -59,6 +62,7 @@
 		const url = new URL(window.location.href);
 		const mapParam = url.searchParams.get('map');
 		const layersParam = url.searchParams.get('layers');
+		const groupsParam = url.searchParams.get('groups');
 
 		// Parse map parameter: zoom,x,y,crs
 		if (mapParam) {
@@ -76,6 +80,14 @@
 						view.setZoom(zoom);
 					}
 				}
+			}
+		}
+
+		// Parse groups parameter (for 'full' mode): group1,group2,...
+		if (groupsParam) {
+			const groupNames = groupsParam.split(',').filter((n) => n.trim());
+			if (groupNames.length > 0) {
+				layerStore.reorderGroups(groupNames);
 			}
 		}
 
@@ -102,7 +114,7 @@
 					}
 				});
 
-				// Track group order based on first occurrence
+				// Track group order based on first occurrence (only if no groups param)
 				const groupOrder: string[] = [];
 				const seenGroups = new Set<string>();
 
@@ -113,17 +125,19 @@
 						layerStore.setLayerVisibility(name, true);
 						layerStore.setLayerOpacity(name, opacity / 100);
 
-						// Track group order
-						const group = layerStore.getGroupByLayerName(name);
-						if (group && !seenGroups.has(group.name)) {
-							seenGroups.add(group.name);
-							groupOrder.push(group.name);
+						// Track group order (only if no groups param provided)
+						if (!groupsParam) {
+							const group = layerStore.getGroupByLayerName(name);
+							if (group && !seenGroups.has(group.name)) {
+								seenGroups.add(group.name);
+								groupOrder.push(group.name);
+							}
 						}
 					}
 				});
 
-				// Reorder groups based on URL layer order
-				if (groupOrder.length > 0) {
+				// Reorder groups based on URL layer order (only if no groups param)
+				if (!groupsParam && groupOrder.length > 0) {
 					layerStore.reorderGroups(groupOrder);
 				}
 			}
@@ -137,14 +151,14 @@
 		const map = mapStore.getMap();
 		if (!map) return;
 
-		// Listen for map move end
+		// Listen for map move end (always, for all modes)
 		if (updateOnMove) {
 			moveEndListener = map.on('moveend', () => {
 				debouncedUpdateUrl();
 			});
 		}
 
-		// Listen for layer changes
+		// Listen for layer changes (only for 'map' and 'full' modes)
 		if (updateOnLayerChange) {
 			// Subscribe to layer store changes
 			unsubscribeBg = activeBackground.subscribe(() => {
@@ -154,6 +168,13 @@
 			});
 
 			unsubscribeOverlay = visibleOverlayLayers.subscribe(() => {
+				if (initialized) {
+					debouncedUpdateUrl();
+				}
+			});
+
+			// Subscribe to groups for 'full' mode (order changes)
+			unsubscribeGroups = overlayGroups.subscribe(() => {
 				if (initialized) {
 					debouncedUpdateUrl();
 				}
@@ -176,6 +197,9 @@
 		}
 		if (unsubscribeOverlay) {
 			unsubscribeOverlay();
+		}
+		if (unsubscribeGroups) {
+			unsubscribeGroups();
 		}
 	}
 
@@ -220,34 +244,46 @@
 		const z = Math.round(zoom * 100) / 100;
 		const mapValue = `${z},${x},${y},${projection}`;
 
-		// Build layers parameter with opacity
-		const layerEntries: string[] = [];
-
-		// Add active background (use get() for one-time read)
-		const currentBg = get(activeBackground);
-		if (currentBg) {
-			layerEntries.push(currentBg.name);
-		}
-
-		// Add visible overlays with opacity (in group order)
-		const overlays = get(visibleOverlayLayers);
-		overlays.forEach((layer) => {
-			layerEntries.push(formatLayerEntry(layer));
-		});
-
 		// Build URL manually to avoid encoding commas
 		const url = new URL(window.location.href);
 		const params: string[] = [];
 
 		params.push(`map=${mapValue}`);
 
-		if (layerEntries.length > 0) {
-			params.push(`layers=${layerEntries.join(',')}`);
+		// Handle layer params based on mode
+		if (urlSyncMode === 'map' || urlSyncMode === 'full') {
+			// Build layers parameter with opacity
+			const layerEntries: string[] = [];
+
+			// Add active background (use get() for one-time read)
+			const currentBg = get(activeBackground);
+			if (currentBg) {
+				layerEntries.push(currentBg.name);
+			}
+
+			// Add visible overlays with opacity (in group order)
+			const overlays = get(visibleOverlayLayers);
+			overlays.forEach((layer) => {
+				layerEntries.push(formatLayerEntry(layer));
+			});
+
+			if (layerEntries.length > 0) {
+				params.push(`layers=${layerEntries.join(',')}`);
+			}
+		}
+
+		// Add groups param for 'full' mode
+		if (urlSyncMode === 'full') {
+			const groups = get(overlayGroups);
+			if (groups.length > 0) {
+				const groupNames = groups.map((g) => g.name);
+				params.push(`groups=${groupNames.join(',')}`);
+			}
 		}
 
 		// Preserve other existing params (like config)
 		url.searchParams.forEach((value, key) => {
-			if (key !== 'map' && key !== 'layers') {
+			if (key !== 'map' && key !== 'layers' && key !== 'groups') {
 				params.push(`${key}=${encodeURIComponent(value)}`);
 			}
 		});

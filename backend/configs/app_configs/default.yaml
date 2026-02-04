@@ -61,6 +61,11 @@ components:
     catalog: true
     searchCatalog: true
 
+# URL sync configuration
+# mode: 'xyz' = position/zoom only | 'map' = + visible layers with opacity | 'full' = + all groups in order
+urlSync:
+    mode: 'map'
+
 searchConfig:
     - name: adress_search
       title: Adresse

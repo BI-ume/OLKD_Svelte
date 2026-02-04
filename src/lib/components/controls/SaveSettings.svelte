@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { mapStore } from '$lib/stores/mapStore';
-	import { layerStore, activeBackground, visibleOverlayLayers } from '$lib/stores/layerStore';
+	import { layerStore, activeBackground, visibleOverlayLayers, overlayGroups } from '$lib/stores/layerStore';
+	import { configStore } from '$lib/stores/configStore';
+	import { createGroup } from '$lib/layers/factory';
+	import type { GroupConfig } from '$lib/layers/types';
 	import { get } from 'svelte/store';
 
 	interface SavedProfile {
@@ -10,6 +13,7 @@
 		zoom: number;
 		activeBackground: string | null;
 		visibleLayers: { name: string; opacity: number }[];
+		groupOrder?: string[]; // Groups in the layerswitcher (in order)
 	}
 
 	const STORAGE_KEY = 'olkd_map_profiles';
@@ -60,6 +64,7 @@
 
 		const bg = get(activeBackground);
 		const overlays = get(visibleOverlayLayers);
+		const groups = get(overlayGroups);
 
 		return {
 			center,
@@ -68,7 +73,8 @@
 			visibleLayers: overlays.map((layer) => ({
 				name: layer.name,
 				opacity: layer.opacity
-			}))
+			})),
+			groupOrder: groups.map((g) => g.name)
 		};
 	}
 
@@ -107,7 +113,35 @@
 		}, 2000);
 	}
 
-	function loadProfile(profile: SavedProfile) {
+	/**
+	 * Fetch a group definition from the catalog API and add it to the layerswitcher
+	 */
+	async function fetchAndAddGroup(groupName: string): Promise<boolean> {
+		const configId = get(configStore).configId || 'default';
+		try {
+			const response = await fetch(`/api/v1/app/${configId}/catalog/group/${groupName}`);
+			if (!response.ok) {
+				console.warn(`Could not fetch group "${groupName}" from catalog`);
+				return false;
+			}
+
+			const data = await response.json();
+			if (!data.group) {
+				console.warn(`Group definition not found for "${groupName}"`);
+				return false;
+			}
+
+			const groupConfig: GroupConfig = data.group;
+			const group = createGroup(groupConfig);
+			layerStore.addGroup(group);
+			return true;
+		} catch (e) {
+			console.error(`Error fetching group "${groupName}":`, e);
+			return false;
+		}
+	}
+
+	async function loadProfile(profile: SavedProfile) {
 		const view = mapStore.getView();
 		if (!view) return;
 
@@ -118,6 +152,30 @@
 		// Restore active background
 		if (profile.activeBackground) {
 			layerStore.setActiveBackgroundByName(profile.activeBackground);
+		}
+
+		// Restore layerswitcher groups if available
+		if (profile.groupOrder && profile.groupOrder.length > 0) {
+			const savedGroupNames = new Set(profile.groupOrder);
+			const currentGroups = get(overlayGroups);
+			const currentGroupNames = new Set(currentGroups.map((g) => g.name));
+
+			// Remove groups that are not in the saved profile
+			for (const group of currentGroups) {
+				if (!savedGroupNames.has(group.name)) {
+					layerStore.removeGroup(group.name);
+				}
+			}
+
+			// Add groups that are in the saved profile but not currently present
+			for (const groupName of profile.groupOrder) {
+				if (!currentGroupNames.has(groupName)) {
+					await fetchAndAddGroup(groupName);
+				}
+			}
+
+			// Reorder groups to match saved order
+			layerStore.reorderGroups(profile.groupOrder);
 		}
 
 		// Hide all overlays first
@@ -133,7 +191,7 @@
 			const layer = layerStore.getLayerByName(name);
 			if (layer) {
 				layerStore.setLayerVisibility(name, true);
-				layer.setOpacity(opacity);
+				layerStore.setLayerOpacity(name, opacity);
 			}
 		});
 
@@ -267,7 +325,7 @@
 						</button>
 					</div>
 					<p class="hint">
-						Speichert: Kartenposition, Zoom, aktive Hintergrundkarte, sichtbare Layer und Transparenz
+						Speichert: Kartenposition, Zoom, aktive Hintergrundkarte, sichtbare Layer, Transparenz und Layerreihenfolge
 					</p>
 				</div>
 

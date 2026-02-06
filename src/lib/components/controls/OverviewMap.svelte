@@ -5,6 +5,13 @@
 	import TileWMS from 'ol/source/TileWMS';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
 
+	interface Props {
+		sidebarOpen?: boolean;
+	}
+
+	// sidebarOpen is received but handled via CSS selector on parent .sidebar-open class
+	let { sidebarOpen = false }: Props = $props();
+
 	let overviewMapControl: OLOverviewMap | null = null;
 
 	onMount(() => {
@@ -67,11 +74,20 @@
 			bottom: 10px;
 			right: auto;
 			top: auto;
+			transition: left 0.3s ease;
+		}
+
+		.sidebar-open .custom-overview-map {
+			left: 310px;
 		}
 
 		.custom-overview-map.ol-uncollapsible {
 			bottom: 10px;
 			left: 10px;
+		}
+
+		.sidebar-open .custom-overview-map.ol-uncollapsible {
+			left: 310px;
 		}
 
 		.custom-overview-map .ol-overviewmap-map {

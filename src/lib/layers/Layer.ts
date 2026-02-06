@@ -14,6 +14,7 @@ export abstract class Layer {
 	readonly legend?: boolean | LegendConfig;
 	readonly attribution?: string;
 	readonly abstract?: string;
+	readonly previewImage?: string;
 
 	protected _visible: boolean;
 	protected _opacity: number;
@@ -29,6 +30,7 @@ export abstract class Layer {
 		this.legend = config.legend;
 		this.attribution = config.attribution;
 		this.abstract = config.abstract;
+		this.previewImage = config.previewImage;
 
 		this._visible = config.visible ?? config.olLayer?.visible ?? false;
 		this._opacity = config.opacity ?? config.olLayer?.opacity ?? 1;
@@ -104,5 +106,14 @@ export abstract class Layer {
 			this._olLayer.dispose();
 			this._olLayer = null;
 		}
+	}
+
+	/**
+	 * Get the legend graphic URL for this layer.
+	 * Override in subclasses that support WMS GetLegendGraphic.
+	 * @returns URL string or null if not supported
+	 */
+	getLegendGraphicUrl(): string | null {
+		return null;
 	}
 }

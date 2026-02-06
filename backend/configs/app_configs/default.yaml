@@ -1,10 +1,12 @@
 app:
     title: 'bielefeldGEOCLIENT'
-    headerLogoLink: 'https://bielefeld01.de/geo/portal/geoportal.php'
+    headerLogoLink: 'https://bielefeld01.de/geo/portal/onlinekarten.php'
     tooltipDelay: 50
     showNoBackground: false
     showLogin: false
     hideMetadata: true
+    sidebar:
+        defaultOpen: true
     
 map:
     center:
@@ -57,7 +59,7 @@ components:
     saveSettings: true
     scaleLine: true
     overviewmap: true
-    layerswitcher: true
+    sidebar: true
     catalog: true
     searchCatalog: true
 

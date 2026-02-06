@@ -12,6 +12,12 @@
 	import type { Map } from 'ol';
 	import Feature from 'ol/Feature';
 
+	interface Props {
+		sidebarOpen?: boolean;
+	}
+
+	let { sidebarOpen = false }: Props = $props();
+
 	type MeasureMode = 'none' | 'point' | 'line' | 'area';
 
 	let isOpen = $state(false);
@@ -387,7 +393,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="measure-control">
+<div class="measure-control" class:sidebar-open={sidebarOpen}>
 	<button
 		class="measure-btn"
 		class:active={isOpen || activeMode !== 'none'}
@@ -478,9 +484,14 @@
 <style>
 	.measure-control {
 		position: absolute;
-		top: 208px;
+		top: 254px;
 		left: 10px;
 		z-index: 100;
+		transition: left 0.3s ease;
+	}
+
+	.measure-control.sidebar-open {
+		left: 310px;
 	}
 
 	.measure-btn {

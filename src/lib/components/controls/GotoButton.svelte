@@ -2,6 +2,12 @@
 	import { mapStore } from '$lib/stores/mapStore';
 	import { transform } from 'ol/proj';
 
+	interface Props {
+		sidebarOpen?: boolean;
+	}
+
+	let { sidebarOpen = false }: Props = $props();
+
 	let isOpen = $state(false);
 
 	// Zoom level offset between our EPSG:25832 tile grid and Web Mercator
@@ -93,7 +99,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="goto-control">
+<div class="goto-control" class:sidebar-open={sidebarOpen}>
 	<button
 		class="goto-btn"
 		class:active={isOpen}
@@ -131,9 +137,14 @@
 <style>
 	.goto-control {
 		position: absolute;
-		top: 168px;
+		top: 214px;
 		left: 10px;
 		z-index: 100;
+		transition: left 0.3s ease;
+	}
+
+	.goto-control.sidebar-open {
+		left: 310px;
 	}
 
 	.goto-btn {

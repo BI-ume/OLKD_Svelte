@@ -6,6 +6,7 @@ layers:
     title: Luftbilder 2025
     type: wms
     background: true
+    previewImage: '/img/background_preview/luftbilder_bi.png'
     attribution: 'Luftbilder 2025 RGB (TDOP) © Stadt Bielefeld'
     source:
       url: http://as-bis-webgeo03.prod.lokal/umn2/ms761/mapserv.exe?map=mapfiles/luftbilder/luftbild_2025_v01.map

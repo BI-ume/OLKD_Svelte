@@ -60,9 +60,14 @@ export interface OlLayerConfig {
 
 // Legend configuration
 export interface LegendConfig {
-	type?: string;
+	type?: string; // 'GetLegendGraphic' | 'link' | 'text'
 	url?: string;
 	title?: string;
+	href?: string; // For link type legends (e.g., PDF)
+	text?: string; // Display text for link legends
+	version?: string; // WMS version override
+	sldVersion?: string; // SLD version override
+	format?: string; // Image format override
 }
 
 // FeatureInfo configuration
@@ -124,6 +129,7 @@ export interface LayerConfig {
 	catalogLayer?: boolean;
 	predefined?: boolean;
 	abstract?: string;
+	previewImage?: string; // URL to preview image for background selector
 }
 
 // Layer group configuration
@@ -176,12 +182,18 @@ export interface ComponentsConfig {
 	scaleLine?: boolean;
 	overviewmap?: boolean;
 	layerswitcher?: boolean;
+	sidebar?: boolean;
 	searchCatalog?: boolean;
 	// Future / not yet configurable
 	legend?: boolean;
 	print?: boolean;
 	catalog?: boolean;
 	alkis?: boolean;
+}
+
+// Sidebar configuration
+export interface SidebarConfig {
+	defaultOpen?: boolean;
 }
 
 // URL sync configuration
@@ -220,6 +232,7 @@ export interface SearchProviderConfig {
 export interface AppHeaderConfig {
 	title?: string;
 	headerLogo?: string;
+	headerLogoLink?: string;
 	ogImage?: string;
 	iframe?: string;
 	tour?: string;
@@ -232,6 +245,7 @@ export interface AppConfig {
 	app?: AppHeaderConfig;
 	map?: MapConfig;
 	components?: ComponentsConfig;
+	sidebar?: SidebarConfig;
 	urlSync?: UrlSyncConfig;
 	printConfig?: PrintConfig;
 	geolocationConfig?: GeolocationConfig;

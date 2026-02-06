@@ -2,6 +2,12 @@
 	import { mapStore } from '$lib/stores/mapStore';
 	import { configStore } from '$lib/stores/configStore';
 
+	interface Props {
+		sidebarOpen?: boolean;
+	}
+
+	let { sidebarOpen = false }: Props = $props();
+
 	let homeCenter = [468152.5616, 5764386.17546];
 	let homeZoom = 8;
 
@@ -20,6 +26,7 @@
 
 <button
 	class="home-btn"
+	class:sidebar-open={sidebarOpen}
 	onclick={zoomHome}
 	title="Zur Übersicht"
 	aria-label="Zur Übersicht zoomen"
@@ -33,7 +40,7 @@
 <style>
 	.home-btn {
 		position: absolute;
-		top: 88px;
+		top: 134px;
 		left: 10px;
 		width: 36px;
 		height: 36px;
@@ -45,9 +52,13 @@
 		border-radius: 4px;
 		cursor: pointer;
 		color: #333;
-		transition: background-color 0.15s;
+		transition: background-color 0.15s, left 0.3s ease;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 		z-index: 100;
+	}
+
+	.home-btn.sidebar-open {
+		left: 310px;
 	}
 
 	.home-btn:hover {

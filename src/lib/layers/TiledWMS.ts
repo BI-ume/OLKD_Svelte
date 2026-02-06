@@ -1,6 +1,6 @@
 import TileLayer from 'ol/layer/Tile';
 import TileWMS from 'ol/source/TileWMS';
-import type { LayerConfig, WMSSourceConfig } from './types';
+import type { LayerConfig, WMSSourceConfig, LegendConfig } from './types';
 import { Layer } from './Layer';
 
 /**
@@ -69,5 +69,47 @@ export class TiledWMS extends Layer {
 		if (source) {
 			source.updateParams(params);
 		}
+	}
+
+	/**
+	 * Get the WMS GetLegendGraphic URL for this layer.
+	 * @returns URL string or null if legend is disabled
+	 */
+	override getLegendGraphicUrl(): string | null {
+		// Check if legend is disabled
+		if (this.legend === false) {
+			return null;
+		}
+
+		// Check if legend type is GetLegendGraphic (or default)
+		const legendConfig = typeof this.legend === 'object' ? this.legend as LegendConfig : null;
+		if (legendConfig?.type === 'link' || legendConfig?.type === 'text') {
+			return null;
+		}
+
+		// Get base URL from source
+		let url = this.sourceConfig.url;
+		if (!url) {
+			return null;
+		}
+
+		// Build query parameters
+		const params = new URLSearchParams({
+			SERVICE: 'WMS',
+			VERSION: legendConfig?.version ?? '1.3.0',
+			SLD_VERSION: legendConfig?.sldVersion ?? '1.1.0',
+			REQUEST: 'GetLegendGraphic',
+			FORMAT: legendConfig?.format ?? 'image/png',
+			LAYER: this.wmsLayers
+		});
+
+		// Append parameters to URL
+		if (url.indexOf('?') === -1) {
+			url += '?';
+		} else if (!url.endsWith('&') && !url.endsWith('?')) {
+			url += '&';
+		}
+
+		return url + params.toString();
 	}
 }

@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { configStore, layerStore, componentsConfig } from '$lib/stores';
+	import { configStore, layerStore, componentsConfig, metadataPopupStore, metadataPopupIsOpen, metadataPopupUrl, metadataPopupTitle } from '$lib/stores';
+	import { sidebarStore, sidebarIsOpen } from '$lib/stores/sidebarStore';
 	import { initializeLayers } from '$lib/layers';
 	import { Map } from '$lib/components/map';
-	import { Layerswitcher } from '$lib/components/layerswitcher';
+	import { Sidebar } from '$lib/components/sidebar';
 	import {
 		ZoomControls,
 		ScaleLine,
@@ -19,6 +20,7 @@
 		SaveSettings,
 		SearchBox
 	} from '$lib/components/controls';
+	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
 
 	// Get config ID from route parameter
 	let configId = $derived($page.params.config || 'default');
@@ -66,7 +68,7 @@
 	let showSaveSettings = $derived($componentsConfig?.saveSettings !== false);
 	let showScaleLine = $derived($componentsConfig?.scaleLine !== false);
 	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false);
-	let showLayerswitcher = $derived($componentsConfig?.layerswitcher !== false);
+	let showSidebar = $derived($componentsConfig?.sidebar !== false);
 </script>
 
 <div class="map-app">
@@ -82,40 +84,72 @@
 			<button onclick={() => window.location.reload()}>Erneut versuchen</button>
 		</div>
 	{:else if initialized}
-		<Map />
-		<UrlSync />
-		<ContextMenu />
-		{#if showSearch}
-			<SearchBox />
+		{#if showSidebar}
+			<Sidebar />
 		{/if}
-		{#if showZoomControls}
-			<ZoomControls />
-		{/if}
-		{#if showHomeButton}
-			<HomeButton />
-		{/if}
-		{#if showGeolocation}
-			<Geolocation />
-		{/if}
-		{#if showGotoButton}
-			<GotoButton />
-		{/if}
-		{#if showMeasure}
-			<MeasureButton />
-		{/if}
-		{#if showSaveSettings}
-			<SaveSettings />
-		{/if}
-		{#if showScaleLine}
-			<ScaleLine />
-		{/if}
-		{#if showOverviewMap}
-			<OverviewMap />
-		{/if}
-		<Attribution />
-		{#if showLayerswitcher}
-			<Layerswitcher />
-		{/if}
+		<div class="map-area">
+			<Map />
+			{#if showSidebar}
+				<button
+					class="sidebar-toggle"
+					class:sidebar-open={sidebarIsOpen}
+					onclick={() => sidebarStore.toggle()}
+					title={$sidebarIsOpen ? 'Menü schließen' : 'Menü öffnen'}
+					aria-label={$sidebarIsOpen ? 'Menü schließen' : 'Menü öffnen'}
+					aria-expanded={$sidebarIsOpen}
+				>
+					{#if $sidebarIsOpen}
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					{:else}
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="3" y1="12" x2="21" y2="12"></line>
+							<line x1="3" y1="6" x2="21" y2="6"></line>
+							<line x1="3" y1="18" x2="21" y2="18"></line>
+						</svg>
+					{/if}
+				</button>
+			{/if}
+			<UrlSync />
+			<ContextMenu />
+			{#if showSearch && !showSidebar}
+				<SearchBox />
+			{/if}
+			{#if showZoomControls}
+				<ZoomControls />
+			{/if}
+			{#if showHomeButton}
+				<HomeButton />
+			{/if}
+			{#if showGeolocation}
+				<Geolocation />
+			{/if}
+			{#if showGotoButton}
+				<GotoButton />
+			{/if}
+			{#if showMeasure}
+				<MeasureButton />
+			{/if}
+			{#if showSaveSettings}
+				<SaveSettings />
+			{/if}
+			{#if showScaleLine}
+				<ScaleLine />
+			{/if}
+			{#if showOverviewMap}
+				<OverviewMap />
+			{/if}
+			<Attribution />
+			{#if $metadataPopupIsOpen}
+				<MetadataPopup
+					url={$metadataPopupUrl}
+					title={$metadataPopupTitle}
+					onClose={() => metadataPopupStore.close()}
+				/>
+			{/if}
+		</div>
 	{:else}
 		<div class="error">
 			<h2>Keine Konfiguration</h2>
@@ -128,7 +162,46 @@
 	.map-app {
 		width: 100%;
 		height: 100%;
+		display: flex;
+	}
+
+	.map-area {
+		flex: 1;
 		position: relative;
+		overflow: hidden;
+	}
+
+	.sidebar-toggle {
+		position: absolute;
+		top: 10px;
+		left: 0;
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: white;
+		border: none;
+		border-top-right-radius: 4px;
+		border-bottom-right-radius: 4px;
+		cursor: pointer;
+		color: #333;
+		z-index: 10;
+		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+		transition: background-color 0.15s;
+	}
+
+	.sidebar-toggle:hover {
+		background: #f0f0f0;
+	}
+
+	.sidebar-toggle svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.sidebar-toggle.sidebar-open {
+		background: #f8f8f8;
 	}
 
 	.loading {

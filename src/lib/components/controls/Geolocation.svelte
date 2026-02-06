@@ -13,9 +13,10 @@
 	interface Props {
 		zoom?: number;
 		highlightTimeout?: number; // ms, 0 = no auto-remove
+		sidebarOpen?: boolean;
 	}
 
-	let { zoom = 14, highlightTimeout = 5000 }: Props = $props();
+	let { zoom = 14, highlightTimeout = 5000, sidebarOpen = false }: Props = $props();
 
 	let isLocating = $state(false);
 	let hasError = $state(false);
@@ -222,7 +223,7 @@
 	});
 </script>
 
-<div class="geolocation">
+<div class="geolocation" class:sidebar-open={sidebarOpen}>
 	<button
 		class="geolocation-btn"
 		class:locating={isLocating}
@@ -248,9 +249,14 @@
 <style>
 	.geolocation {
 		position: absolute;
-		top: 128px;
+		top: 174px;
 		left: 10px;
 		z-index: 100;
+		transition: left 0.3s ease;
+	}
+
+	.geolocation.sidebar-open {
+		left: 310px;
 	}
 
 	.geolocation-btn {

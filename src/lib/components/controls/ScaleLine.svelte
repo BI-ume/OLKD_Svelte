@@ -3,6 +3,12 @@
 	import { ScaleLine as OLScaleLine } from 'ol/control';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
 
+	interface Props {
+		sidebarOpen?: boolean;
+	}
+
+	let { sidebarOpen = false }: Props = $props();
+
 	let containerElement: HTMLButtonElement;
 	let scaleLineControl: OLScaleLine | null = null;
 	let showDialog = $state(false);
@@ -148,6 +154,7 @@
 
 <button
 	class="scale-line"
+	class:sidebar-open={sidebarOpen}
 	bind:this={containerElement}
 	onclick={handleClick}
 	title="Maßstab einstellen"
@@ -191,6 +198,10 @@
 		border: none;
 		padding: 0;
 		cursor: pointer;
+	}
+
+	.scale-line.sidebar-open {
+		left: calc(50% + 150px);
 	}
 
 	/* OpenLayers ScaleLine overrides */

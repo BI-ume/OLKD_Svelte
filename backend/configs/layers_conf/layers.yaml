@@ -6,6 +6,7 @@ layers:
     title: bielefeldKARTE farbe
     type: wms
     background: true
+    previewImage: '/img/background_preview/stadtplan_bi.png'
     attribution: 'bielefeldKARTE Kartenbild © Stadt Bielefeld (<a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank">CC BY 4.0</a>), bielefeldKARTE Kartendaten © Stadt Bielefeld und <a href="http://www.openstreetmap.org/#map=15/52.0189/8.5338" target="_blank">OpenStreetMap</a> (<a href="http://opendatacommons.org/licenses/odbl/" target="_blank">ODbL</a>)'
     source:
       url: "http://bielefeld01.de/md/WMS/bielefeld_karte_farbe/02"

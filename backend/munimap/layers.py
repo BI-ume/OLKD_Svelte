@@ -95,7 +95,7 @@ def anol_background_layer(layer_conf):
     }
 
     # Optional layer properties
-    for prop in ['metadataUrl', 'searchConfig', 'legend', 'opacity', 'attribution']:
+    for prop in ['metadataUrl', 'searchConfig', 'legend', 'opacity', 'attribution', 'previewImage']:
         if prop in layer_conf:
             background_layer[prop] = layer_conf[prop]
 

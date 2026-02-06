@@ -11,6 +11,13 @@
 	import type { Geometry } from 'ol/geom';
 	import Point from 'ol/geom/Point';
 
+	interface Props {
+		sidebarOpen?: boolean;
+		embedded?: boolean;
+	}
+
+	let { sidebarOpen = false, embedded = false }: Props = $props();
+
 	let inputElement: HTMLInputElement;
 	let isOpen = $state(false);
 	let highlightedIndex = $state(-1);
@@ -226,7 +233,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="search-box">
+<div class="search-box" class:sidebar-open={sidebarOpen} class:embedded>
 	<div class="search-input-wrapper">
 		<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 			<circle cx="11" cy="11" r="8"></circle>
@@ -331,6 +338,11 @@
 		left: 56px;
 		z-index: 100;
 		width: 300px;
+		transition: left 0.3s ease;
+	}
+
+	.search-box.sidebar-open {
+		left: 360px;
 	}
 
 	.search-input-wrapper {
@@ -510,5 +522,41 @@
 
 	.check-icon {
 		flex-shrink: 0;
+	}
+
+	/* Embedded mode (inside sidebar) */
+	.search-box.embedded {
+		position: relative;
+		top: auto;
+		left: auto;
+		width: 100%;
+		z-index: 10;
+		transition: none;
+	}
+
+	.search-box.embedded .search-input {
+		border-radius: 0;
+		box-shadow: none;
+		border-bottom: 1px solid #e0e0e0;
+		padding: 12px 36px;
+	}
+
+	.search-box.embedded .search-input:focus {
+		box-shadow: none;
+		border-bottom-color: #2196f3;
+	}
+
+	.search-box.embedded .search-results {
+		border-radius: 0;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		top: 100%;
+		z-index: 20;
+	}
+
+	.search-box.embedded .search-no-results,
+	.search-box.embedded .search-error {
+		border-radius: 0;
+		top: 100%;
+		z-index: 20;
 	}
 </style>

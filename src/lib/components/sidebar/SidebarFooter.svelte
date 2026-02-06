@@ -1,6 +1,15 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+
 	const nutzungsbedingungenUrl = 'https://stadtplan.bielefeld.de/pages/nutzungsbedingungen';
-	const emailAddress = 'posteingang@bielefeld.de';
+	const emailAddress = 'olkd@bielefeld.de';
+	const emailSubject = 'onlineKARTENdienst Stadt Bielefeld';
+
+	let mailtoHref = $derived.by(() => {
+		const subject = encodeURIComponent(emailSubject);
+		const body = encodeURIComponent(browser ? 'Aktuelle URL: ' + window.location.href : '');
+		return `mailto:${emailAddress}?subject=${subject}&body=${body}`;
+	});
 </script>
 
 <footer class="sidebar-footer">
@@ -8,7 +17,7 @@
 		<a href={nutzungsbedingungenUrl} target="_blank" rel="noopener noreferrer">
 			Nutzungsbedingungen
 		</a>
-		<a href="mailto:{emailAddress}" class="email-link" title="E-Mail senden">
+		<a href={mailtoHref} class="email-link" title="Feedback senden">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
 				<polyline points="22,6 12,13 2,6"></polyline>

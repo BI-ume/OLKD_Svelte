@@ -47,3 +47,18 @@ export {
 	metadataPopupUrl,
 	metadataPopupTitle
 } from './metadataPopupStore';
+
+export {
+	printStore,
+	printIsOpen,
+	printSettings,
+	printStatus,
+	printJob,
+	printError,
+	PAGE_SIZES,
+	MIN_SCALE,
+	MAX_SCALE,
+	MIN_PAGE_SIZE,
+	MAX_PAGE_SIZE
+} from './printStore';
+export type { PageLayout, OutputFormat, PrintStatus, PageSize, PrintSettings, PrintJob } from './printStore';

@@ -9,6 +9,7 @@
 	import OverlaySelection from './OverlaySelection.svelte';
 	import Legend from './Legend.svelte';
 	import Catalog from './Catalog.svelte';
+	import Print from './Print.svelte';
 
 	let showSearch = $derived($componentsConfig?.search !== false);
 	let showLegend = $derived($configStore.app?.components?.legend !== false);
@@ -29,6 +30,10 @@
 		const body = encodeURIComponent(browser ? 'Aktuelle URL: ' + window.location.href : '');
 		return `mailto:${emailAddress}?subject=${subject}&body=${body}`;
 	});
+
+	function handleOpenPrint() {
+		sidebarStore.showPrint();
+	}
 
 	// Initialize from config
 	onMount(() => {
@@ -113,8 +118,11 @@
 			<div class="sidebar-secondary" class:visible={$sidebarShowCatalog}>
 				<Catalog />
 			</div>
-		<SidebarContent />
-		<SidebarFooter />
+
+			<!-- Print panel (slides in from right) -->
+			<div class="sidebar-secondary" class:visible={$sidebarShowPrint}>
+				<Print />
+			</div>
 		</div>
 	</aside>
 </div>
@@ -255,6 +263,31 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+	}
+
+	.print-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 10px 16px;
+		background: #2196f3;
+		border: none;
+		border-radius: 4px;
+		font-size: 14px;
+		font-weight: 500;
+		color: white;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.print-btn:hover {
+		background: #1976d2;
+	}
+
+	.print-btn svg {
+		width: 18px;
+		height: 18px;
 	}
 
 	.footer-links {

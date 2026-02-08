@@ -25,6 +25,10 @@ export default defineConfig({
 			'/static_geojson': {
 				target: backendUrl,
 				changeOrigin: true
+			},
+			'/export': {
+				target: backendUrl,
+				changeOrigin: true
 			}
 		}
 	}

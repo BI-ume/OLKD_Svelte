@@ -18,7 +18,8 @@
 		GotoButton,
 		MeasureButton,
 		SaveSettings,
-		SearchBox
+		SearchBox,
+		PrintPreview
 	} from '$lib/components/controls';
 	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
 
@@ -142,6 +143,7 @@
 				<OverviewMap />
 			{/if}
 			<Attribution />
+			<PrintPreview />
 			{#if $metadataPopupIsOpen}
 				<MetadataPopup
 					url={$metadataPopupUrl}

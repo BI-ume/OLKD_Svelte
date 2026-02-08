@@ -205,6 +205,54 @@ function createLayerStore() {
 		},
 
 		/**
+		 * Get names of all visible layers (background + overlays)
+		 */
+		getVisibleLayerNames: (): string[] => {
+			const state = get({ subscribe });
+			const names: string[] = [];
+
+			// Add active background
+			if (state.activeBackgroundLayer) {
+				names.push(state.activeBackgroundLayer.name);
+			}
+
+			// Add visible overlays
+			state.overlayGroups.forEach((group) => {
+				group.layers.forEach((layer) => {
+					if (layer.visible) {
+						names.push(layer.name);
+					}
+				});
+			});
+
+			return names;
+		},
+
+		/**
+		 * Get opacities for visible layers where opacity !== 1
+		 */
+		getLayerOpacities: (): Record<string, number> => {
+			const state = get({ subscribe });
+			const opacities: Record<string, number> = {};
+
+			// Background layer
+			if (state.activeBackgroundLayer && state.activeBackgroundLayer.opacity !== 1) {
+				opacities[state.activeBackgroundLayer.name] = state.activeBackgroundLayer.opacity;
+			}
+
+			// Visible overlays
+			state.overlayGroups.forEach((group) => {
+				group.layers.forEach((layer) => {
+					if (layer.visible && layer.opacity !== 1) {
+						opacities[layer.name] = layer.opacity;
+					}
+				});
+			});
+
+			return opacities;
+		},
+
+		/**
 		 * Get all layers (background + overlay)
 		 */
 		getAllLayers: (): Layer[] => {

@@ -10,6 +10,7 @@ from flask_cors import CORS
 
 from munimap.layers import load_layers_config, create_anol_layers
 from munimap.app_layers_def import prepare_layers_def, prepare_catalog_names, prepare_catalog_group_def
+from munimap.export import export_bp
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +55,9 @@ def create_app(config_path=None):
 
     # Enable CORS for development
     CORS(app)
+
+    # Register blueprints
+    app.register_blueprint(export_bp)
 
     # Configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

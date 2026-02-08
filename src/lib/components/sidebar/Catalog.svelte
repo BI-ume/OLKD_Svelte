@@ -55,14 +55,12 @@
 </script>
 
 <div class="catalog">
-	<header class="catalog-header">
-		<button class="back-btn" onclick={handleBack} title="Zurück">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<polyline points="15 18 9 12 15 6"></polyline>
-			</svg>
-		</button>
+	<button class="catalog-header" onclick={handleBack} title="Zurück zur Übersicht">
+		<svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="15 18 9 12 15 6"></polyline>
+		</svg>
 		<h2 class="catalog-title">Katalog</h2>
-	</header>
+	</button>
 
 	{#if showFilter}
 		<div class="filter-container">
@@ -137,33 +135,29 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		width: 100%;
 		padding: 12px 16px;
+		border: none;
 		border-bottom: 1px solid #e0e0e0;
 		background: #f8f8f8;
-	}
-
-	.back-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 32px;
-		height: 32px;
-		background: none;
-		border: none;
-		border-radius: 4px;
 		cursor: pointer;
+		transition: background-color 0.15s;
+		text-align: left;
+	}
+
+	.catalog-header:hover {
+		background: #e8e8e8;
+	}
+
+	.back-icon {
+		width: 24px;
+		height: 24px;
 		color: #666;
-		transition: background-color 0.15s, color 0.15s;
+		flex-shrink: 0;
 	}
 
-	.back-btn:hover {
-		background: #e0e0e0;
+	.catalog-header:hover .back-icon {
 		color: #333;
-	}
-
-	.back-btn svg {
-		width: 20px;
-		height: 20px;
 	}
 
 	.catalog-title {

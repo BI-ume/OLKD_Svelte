@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { layerStore, backgroundLayers, activeBackground } from '$lib/stores/layerStore';
 	import type { Layer } from '$lib/layers/Layer';
+	import { slide } from 'svelte/transition';
 
 	let isCollapsed = $state(true);
 
@@ -30,7 +31,7 @@
 		<span class="active-name">{$activeBackground?.title || ''}</span>
 	</button>
 	{#if !isCollapsed}
-	<div class="background-grid">
+	<div class="background-grid" transition:slide={{ duration: 200 }}>
 		{#each $backgroundLayers as layer (layer.name)}
 			<button
 				class="background-item"

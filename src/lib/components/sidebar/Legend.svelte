@@ -2,6 +2,7 @@
 	import { layerStore, activeBackground, overlayGroups } from '$lib/stores/layerStore';
 	import type { Layer } from '$lib/layers/Layer';
 	import type { LegendConfig } from '$lib/layers/types';
+	import { slide } from 'svelte/transition';
 
 	// Section collapsed state (collapsed by default)
 	let sectionCollapsed = $state(true);
@@ -111,6 +112,7 @@
 	</button>
 
 	{#if !sectionCollapsed}
+		<div transition:slide={{ duration: 200 }}>
 		{#if visibleLegendLayers.length === 0}
 			<p class="no-legend">Keine sichtbaren Layer</p>
 		{:else}
@@ -142,7 +144,7 @@
 							</button>
 
 							{#if !collapsed}
-								<div class="legend-content">
+								<div class="legend-content" transition:slide={{ duration: 200 }}>
 									{#if legendType === 'graphic'}
 										{@const url = getLegendGraphicUrl(layer)}
 										{#if url}
@@ -178,6 +180,7 @@
 				{/each}
 			</div>
 		{/if}
+		</div>
 	{/if}
 </section>
 

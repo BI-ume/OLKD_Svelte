@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { layerStore } from '$lib/stores/layerStore';
+    import { fly } from 'svelte/transition';
 
 	let isOpen = $state(false);
 
@@ -37,7 +38,7 @@
 
 <div class="attribution" class:open={isOpen}>
 	{#if isOpen && attributions.length > 0}
-		<div class="attribution-list">
+		<div class="attribution-list" transition:fly={{x: '110%'}}>
 			{#each attributions as attribution}
 				<div class="attribution-item">
 					{@html attribution}

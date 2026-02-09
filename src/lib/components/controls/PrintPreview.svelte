@@ -77,23 +77,30 @@
 
 	// --- Drag interaction ---
 
+	function setCursor(cursor: string) {
+		const el = map?.getTargetElement();
+		if (el) el.style.cursor = cursor;
+	}
+
+	function isHitOnPreview(pixel: number[]): boolean {
+		if (!map || !previewFeature) return false;
+		return !!map.forEachFeatureAtPixel(pixel, (f, layer) => {
+			return layer === previewLayer && f === previewFeature;
+		});
+	}
+
 	function createDragInteraction(): PointerInteraction {
 		let startCoord: number[] | null = null;
 		let dragging = false;
 
 		return new PointerInteraction({
 			handleDownEvent(evt: MapBrowserEvent<any>) {
-				if (!map || !previewFeature) return false;
-				const hit = map.forEachFeatureAtPixel(evt.pixel, (f, layer) => {
-					return layer === previewLayer && f === previewFeature;
-				});
-				if (hit) {
-					startCoord = evt.coordinate.slice();
-					dragging = true;
-					isInteracting = true;
-					return true;
-				}
-				return false;
+				if (!isHitOnPreview(evt.pixel)) return false;
+				startCoord = evt.coordinate.slice();
+				dragging = true;
+				isInteracting = true;
+				setCursor('grabbing');
+				return true;
 			},
 			handleDragEvent(evt: MapBrowserEvent<any>) {
 				if (!dragging || !startCoord || !previewFeature) return;
@@ -110,7 +117,11 @@
 				startCoord = null;
 				dragging = false;
 				isInteracting = false;
+				setCursor('');
 				return false;
+			},
+			handleMoveEvent(evt: MapBrowserEvent<any>) {
+				setCursor(isHitOnPreview(evt.pixel) ? 'grab' : '');
 			}
 		});
 	}
@@ -150,6 +161,7 @@
 			if (previewLayer) {
 				map.removeLayer(previewLayer);
 			}
+			setCursor('');
 		}
 		previewLayer = null;
 		previewFeature = null;

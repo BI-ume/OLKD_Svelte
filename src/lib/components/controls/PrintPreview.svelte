@@ -1,184 +1,100 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { mapStore } from '$lib/stores/mapStore';
-	import { printSettings } from '$lib/stores/printStore';
+	import { printStore, printSettings, AVAILABLE_SCALES } from '$lib/stores/printStore';
 	import { sidebarShowPrint } from '$lib/stores/sidebarStore';
-	import VectorLayer from 'ol/layer/Vector';
-	import VectorSource from 'ol/source/Vector';
-	import Feature from 'ol/Feature';
-	import { Polygon } from 'ol/geom';
-	import { Style, Stroke, Fill } from 'ol/style';
-	import { Pointer as PointerInteraction } from 'ol/interaction';
 	import type OlMap from 'ol/Map';
-	import type { MapBrowserEvent } from 'ol';
+	import type { EventsKey } from 'ol/events';
+	import { unByKey } from 'ol/Observable';
 
 	let map = $state<OlMap | null>(null);
-	let previewLayer: VectorLayer<VectorSource> | null = null;
-	let previewFeature: Feature<Polygon> | null = null;
-	let dragInteraction: PointerInteraction | null = null;
+	let resolution = $state(1);
+	let resolutionKey: EventsKey | null = null;
 
-	// Print area center, decoupled from map center once dragged
-	let printCenter: [number, number] | null = null;
-	let isInteracting = false;
-
-	function getMapCenter(): [number, number] | null {
-		if (!map) return null;
-		const center = map.getView().getCenter();
-		return center ? [center[0], center[1]] : null;
-	}
-
-	function getExtentFromCenter(
-		center: [number, number],
-		widthMm: number,
-		heightMm: number,
-		scale: number
-	): [number, number, number, number] {
-		const mapWidth = (widthMm * scale) / 1000;
-		const mapHeight = (heightMm * scale) / 1000;
-		return [
-			center[0] - mapWidth / 2,
-			center[1] - mapHeight / 2,
-			center[0] + mapWidth / 2,
-			center[1] + mapHeight / 2
-		];
-	}
-
-	function setPolygonFromExtent(extent: [number, number, number, number]) {
-		if (!previewFeature) return;
-		const [left, bottom, right, top] = extent;
-		previewFeature.getGeometry()!.setCoordinates([
-			[
-				[left, bottom],
-				[right, bottom],
-				[right, top],
-				[left, top],
-				[left, bottom]
-			]
-		]);
-	}
-
-	function updatePreview() {
-		if (!previewFeature || !map || isInteracting) return;
-
-		const settings = $printSettings;
-		if (!printCenter) {
-			printCenter = getMapCenter();
-		}
-		if (!printCenter) return;
-
-		const extent = getExtentFromCenter(
-			printCenter,
-			settings.pageSize.width,
-			settings.pageSize.height,
-			settings.scale
-		);
-		setPolygonFromExtent(extent);
-	}
-
-	// --- Drag interaction ---
-
-	function createDragInteraction(): PointerInteraction {
-		let startCoord: number[] | null = null;
-		let dragging = false;
-
-		return new PointerInteraction({
-			handleDownEvent(evt: MapBrowserEvent<any>) {
-				if (!map || !previewFeature) return false;
-				const hit = map.forEachFeatureAtPixel(evt.pixel, (f, layer) => {
-					return layer === previewLayer && f === previewFeature;
-				});
-				if (hit) {
-					startCoord = evt.coordinate.slice();
-					dragging = true;
-					isInteracting = true;
-					return true;
-				}
-				return false;
-			},
-			handleDragEvent(evt: MapBrowserEvent<any>) {
-				if (!dragging || !startCoord || !previewFeature) return;
-				const dx = evt.coordinate[0] - startCoord[0];
-				const dy = evt.coordinate[1] - startCoord[1];
-				previewFeature.getGeometry()!.translate(dx, dy);
-				startCoord = evt.coordinate.slice();
-			},
-			handleUpEvent() {
-				if (dragging && previewFeature) {
-					const ext = previewFeature.getGeometry()!.getExtent();
-					printCenter = [(ext[0] + ext[2]) / 2, (ext[1] + ext[3]) / 2];
-				}
-				startCoord = null;
-				dragging = false;
-				isInteracting = false;
-				return false;
-			}
-		});
-	}
-
-	// --- Layer setup ---
-
-	function addLayer() {
-		if (!map || previewLayer) return;
-
-		const source = new VectorSource();
-
-		previewFeature = new Feature(new Polygon([[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]]));
-		previewFeature.setStyle(
-			new Style({
-				stroke: new Stroke({ color: '#2196f3', width: 2, lineDash: [8, 4] }),
-				fill: new Fill({ color: 'rgba(33, 150, 243, 0.1)' })
-			})
-		);
-		source.addFeature(previewFeature);
-
-		previewLayer = new VectorLayer({ source, zIndex: 9999 });
-		map.addLayer(previewLayer);
-
-		printCenter = getMapCenter();
-		updatePreview();
-
-		dragInteraction = createDragInteraction();
-		map.addInteraction(dragInteraction);
-	}
-
-	function removeLayer() {
-		if (map) {
-			if (dragInteraction) {
-				map.removeInteraction(dragInteraction);
-				dragInteraction = null;
-			}
-			if (previewLayer) {
-				map.removeLayer(previewLayer);
-			}
-		}
-		previewLayer = null;
-		previewFeature = null;
-		printCenter = null;
-	}
-
-	// React to print panel open/close and settings changes
-	$effect(() => {
-		if (!map) return;
-
-		if ($sidebarShowPrint) {
-			const _ = $printSettings;
-			if (!previewLayer) {
-				addLayer();
-			} else {
-				updatePreview();
-			}
-		} else {
-			removeLayer();
-		}
+	let widthPx = $derived.by(() => {
+		const s = $printSettings;
+		const mapWidth = (s.pageSize.width * s.scale) / 1000;
+		return mapWidth / resolution;
 	});
+
+	let heightPx = $derived.by(() => {
+		const s = $printSettings;
+		const mapHeight = (s.pageSize.height * s.scale) / 1000;
+		return mapHeight / resolution;
+	});
+
+	let visible = $derived($sidebarShowPrint);
+
+	/**
+	 * Find the largest predefined scale where the print rectangle
+	 * still fits inside the map viewport.
+	 */
+	function fitScaleToViewport() {
+		if (!map || !$sidebarShowPrint) return;
+
+		const size = map.getSize();
+		if (!size) return;
+
+		const [vpWidth, vpHeight] = size;
+		const res = map.getView().getResolution() ?? 1;
+		const s = $printSettings;
+
+		// Max scale that fits: (viewportPx * resolution * 1000) / pageSizeMm
+		const maxScaleW = (vpWidth * res * 1000) / s.pageSize.width;
+		const maxScaleH = (vpHeight * res * 1000) / s.pageSize.height;
+		const maxScale = Math.min(maxScaleW, maxScaleH);
+
+		// Pick largest predefined scale <= maxScale
+		let bestScale = AVAILABLE_SCALES[0];
+		for (const scale of AVAILABLE_SCALES) {
+			if (scale <= maxScale) {
+				bestScale = scale;
+			} else {
+				break;
+			}
+		}
+
+		if (bestScale !== s.scale) {
+			printStore.setScale(bestScale);
+		}
+	}
+
+	function onResolutionChange() {
+		if (!map) return;
+		resolution = map.getView().getResolution() ?? 1;
+		fitScaleToViewport();
+	}
 
 	onMount(() => {
 		map = mapStore.getMap();
+		if (map) {
+			resolution = map.getView().getResolution() ?? 1;
+			resolutionKey = map.getView().on('change:resolution', onResolutionChange);
+		}
 	});
 
 	onDestroy(() => {
-		removeLayer();
+		if (resolutionKey) {
+			unByKey(resolutionKey);
+		}
 	});
 </script>
 
-<!-- This component renders directly to the map via OpenLayers, no DOM needed -->
+{#if visible}
+	<div
+		class="print-preview"
+		style="width: {widthPx}px; height: {heightPx}px;"
+	></div>
+{/if}
+
+<style>
+	.print-preview {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		border: 2px dashed #2196f3;
+		pointer-events: none;
+		z-index: 1;
+	}
+</style>

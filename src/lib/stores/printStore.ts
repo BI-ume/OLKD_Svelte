@@ -48,10 +48,13 @@ const DEFAULT_SETTINGS: PrintSettings = {
 
 // Scale constraints
 export const MIN_SCALE = 100;
+export const MAX_SCALE = 100000;
 // Custom page size constraints (mm)
 export const MIN_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 1000;
-export const MAX_SCALE = 100000;
+
+// Predefined round scales (ascending)
+export const AVAILABLE_SCALES = [500, 1000, 2500, 5000, 10000, 15000, 25000, 50000, 100000];
 
 function createPrintStore() {
 	const { subscribe, set, update } = writable<PrintState>({

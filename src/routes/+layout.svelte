@@ -1,5 +1,5 @@
 <script lang="ts">
-		let { children } = $props();
+	let { children } = $props();
 </script>
 
 <svelte:head>
@@ -19,6 +19,7 @@
 		height: 100%;
 		overflow: hidden;
 		font-family:
+			'Cera Bielefeld Web',
 			-apple-system,
 			BlinkMacSystemFont,
 			'Segoe UI',

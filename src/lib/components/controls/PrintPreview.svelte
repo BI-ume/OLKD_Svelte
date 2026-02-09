@@ -168,6 +168,16 @@
 		printCenter = null;
 	}
 
+	// Re-center preview when layout changes (A4/A3/portrait/landscape buttons)
+	let lastLayout: string | null = null;
+	$effect(() => {
+		const layout = $printSettings.layout;
+		if (lastLayout !== null && layout !== lastLayout) {
+			printCenter = null;
+		}
+		lastLayout = layout;
+	});
+
 	// React to print panel open/close and settings changes
 	$effect(() => {
 		if (!map) return;

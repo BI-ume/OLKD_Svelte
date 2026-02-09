@@ -55,7 +55,7 @@
 		<!-- Header -->
 		<header class="sidebar-header">
 			<a href={headerLogoLink} target="_blank" rel="noopener noreferrer" class="logo-link">
-				<img src="/img/logo_BIE_padding.svg" alt="Bielefeld Logo" class="logo" />
+				<img src="/img/logo_BIE.svg" alt="Bielefeld Logo" class="logo" />
 			</a>
 			<div class="title-section">
 				<h1 class="title">{title}</h1>
@@ -151,12 +151,15 @@
 
 	/* Header */
 	.sidebar-header {
+		--logo-width: 36px;
+		--logo-color: #e30613;
 		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 16px;
+		align-items: flex-end;
+		gap: calc(var(--logo-width) / 2);
+		padding: calc(var(--logo-width) / 3);
 		border-bottom: 1px solid #e0e0e0;
 		background: #f8f8f8;
+		color: var(--logo-color);
 	}
 
 	.logo-link {
@@ -164,7 +167,7 @@
 	}
 
 	.logo {
-		width: 48px;
+		width: var(--logo-width);
 		height: auto;
 	}
 
@@ -179,21 +182,20 @@
 		margin: 0;
 		font-size: 16px;
 		font-weight: 600;
-		color: #333;
+		color: var(--logo-color);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.header-link {
-		font-size: 12px;
-		color: #666;
+		font-size: 16px;
+		color: var(--logo-color);
 		text-decoration: none;
 		transition: color 0.15s;
 	}
 
 	.header-link:hover {
-		color: #E2001A;
 		text-decoration: underline;
 	}
 

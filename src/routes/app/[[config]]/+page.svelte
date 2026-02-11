@@ -19,7 +19,9 @@
 		MeasureButton,
 		SaveSettings,
 		SearchBox,
-		PrintPreview
+		PrintPreview,
+		DrawLayer,
+		DrawStylePopup
 	} from '$lib/components/controls';
 	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
 
@@ -70,6 +72,7 @@
 	let showScaleLine = $derived($componentsConfig?.scaleLine !== false);
 	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false);
 	let showSidebar = $derived($componentsConfig?.sidebar !== false);
+	let showDraw = $derived($componentsConfig?.draw !== false);
 </script>
 
 <div class="map-app">
@@ -144,6 +147,10 @@
 			{/if}
 			<Attribution />
 			<PrintPreview />
+			{#if showDraw}
+				<DrawLayer />
+				<DrawStylePopup />
+			{/if}
 			{#if $metadataPopupIsOpen}
 				<MetadataPopup
 					url={$metadataPopupUrl}

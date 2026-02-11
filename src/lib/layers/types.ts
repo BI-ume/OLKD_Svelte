@@ -189,6 +189,7 @@ export interface ComponentsConfig {
 	print?: boolean;
 	catalog?: boolean;
 	alkis?: boolean;
+	draw?: boolean;
 }
 
 // Sidebar configuration

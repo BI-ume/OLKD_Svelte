@@ -11,3 +11,5 @@ export { default as MeasureButton } from './MeasureButton.svelte';
 export { default as SaveSettings } from './SaveSettings.svelte';
 export { default as SearchBox } from './SearchBox.svelte';
 export { default as PrintPreview } from './PrintPreview.svelte';
+export { default as DrawLayer } from './DrawLayer.svelte';
+export { default as DrawStylePopup } from './DrawStylePopup.svelte';

@@ -2,6 +2,7 @@
 	import { mapStore } from '$lib/stores/mapStore';
 	import { layerStore, activeBackground, visibleOverlayLayers, overlayGroups } from '$lib/stores/layerStore';
 	import { configStore } from '$lib/stores/configStore';
+	import { drawStore } from '$lib/stores/drawStore';
 	import { createGroup } from '$lib/layers/factory';
 	import type { GroupConfig } from '$lib/layers/types';
 	import { get } from 'svelte/store';
@@ -19,7 +20,8 @@
 		zoom: number;
 		activeBackground: string | null;
 		visibleLayers: { name: string; opacity: number }[];
-		groupOrder?: string[]; // Groups in the layerswitcher (in order)
+		groupOrder?: string[];
+		drawFeatures?: string; // GeoJSON FeatureCollection string
 	}
 
 	const STORAGE_KEY = 'olkd_map_profiles';
@@ -72,6 +74,8 @@
 		const overlays = get(visibleOverlayLayers);
 		const groups = get(overlayGroups);
 
+		const drawFeatures = drawStore.exportGeoJSON() || undefined;
+
 		return {
 			center,
 			zoom,
@@ -80,7 +84,8 @@
 				name: layer.name,
 				opacity: layer.opacity
 			})),
-			groupOrder: groups.map((g) => g.name)
+			groupOrder: groups.map((g) => g.name),
+			drawFeatures
 		};
 	}
 
@@ -200,6 +205,12 @@
 				layerStore.setLayerOpacity(name, opacity);
 			}
 		});
+
+		// Restore draw features
+		if (profile.drawFeatures) {
+			drawStore.clearAll();
+			drawStore.importGeoJSON(profile.drawFeatures);
+		}
 
 		feedback = { type: 'success', message: `Profil "${profile.name}" geladen` };
 		setTimeout(() => {
@@ -331,7 +342,7 @@
 						</button>
 					</div>
 					<p class="hint">
-						Speichert: Kartenposition, Zoom, aktive Hintergrundkarte, sichtbare Layer, Transparenz und Layerreihenfolge
+						Speichert: Kartenposition, Zoom, aktive Hintergrundkarte, sichtbare Layer, Transparenz, Layerreihenfolge und Zeichnungen
 					</p>
 				</div>
 

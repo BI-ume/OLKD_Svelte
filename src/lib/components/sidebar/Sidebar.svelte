@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { sidebarStore, sidebarIsOpen, sidebarShowCatalog, sidebarShowPrint } from '$lib/stores/sidebarStore';
+	import { sidebarStore, sidebarIsOpen, sidebarShowCatalog, sidebarShowPrint, sidebarShowDraw } from '$lib/stores/sidebarStore';
 	import { configStore, componentsConfig } from '$lib/stores/configStore';
 	import { mapStore } from '$lib/stores/mapStore';
 	import { SearchBox } from '$lib/components/controls';
@@ -10,11 +10,13 @@
 	import Legend from './Legend.svelte';
 	import Catalog from './Catalog.svelte';
 	import Print from './Print.svelte';
+	import Draw from './Draw.svelte';
 
 	let showSearch = $derived($componentsConfig?.search !== false);
 	let showLegend = $derived($configStore.app?.components?.legend !== false);
 	let showPrintButton = $derived($configStore.app?.components?.print !== false);
-	let showSecondary = $derived($sidebarShowCatalog || $sidebarShowPrint);
+	let showDrawButton = $derived($configStore.app?.components?.draw !== false);
+	let showSecondary = $derived($sidebarShowCatalog || $sidebarShowPrint || $sidebarShowDraw);
 
 	// Header
 	let title = $derived($configStore.app?.app?.title ?? 'bielefeldGEOCLIENT');
@@ -33,6 +35,10 @@
 
 	function handleOpenPrint() {
 		sidebarStore.showPrint();
+	}
+
+	function handleOpenDraw() {
+		sidebarStore.showDraw();
 	}
 
 	// Initialize from config
@@ -82,15 +88,28 @@
 					{/if}
 				</div>
 				<footer class="sidebar-footer">
-					{#if showPrintButton}
-						<button class="print-btn" onclick={handleOpenPrint}>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polyline points="6 9 6 2 18 2 18 9"></polyline>
-								<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-								<rect x="6" y="14" width="12" height="8"></rect>
-							</svg>
-							Karte drucken
-						</button>
+					{#if showPrintButton || showDrawButton}
+						<div class="action-row">
+							{#if showPrintButton}
+								<button class="action-btn" onclick={handleOpenPrint}>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 6 2 18 2 18 9"></polyline>
+										<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+										<rect x="6" y="14" width="12" height="8"></rect>
+									</svg>
+									Drucken
+								</button>
+							{/if}
+							{#if showDrawButton}
+								<button class="action-btn" onclick={handleOpenDraw}>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M12 20h9"></path>
+										<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+									</svg>
+									Zeichnen
+								</button>
+							{/if}
+						</div>
 					{/if}
 					<div class="footer-links">
 						<a href={nutzungsbedingungenUrl} target="_blank" rel="noopener noreferrer">
@@ -122,6 +141,11 @@
 			<!-- Print panel (slides in from right) -->
 			<div class="sidebar-secondary" class:visible={$sidebarShowPrint}>
 				<Print />
+			</div>
+
+			<!-- Draw panel (slides in from right) -->
+			<div class="sidebar-secondary" class:visible={$sidebarShowDraw}>
+				<Draw />
 			</div>
 		</div>
 	</aside>
@@ -267,29 +291,35 @@
 		gap: 10px;
 	}
 
-	.print-btn {
+	.action-row {
+		display: flex;
+		gap: 8px;
+	}
+
+	.action-btn {
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 8px;
-		padding: 10px 16px;
+		gap: 6px;
+		padding: 8px 10px;
 		background: #2196f3;
 		border: none;
 		border-radius: 4px;
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
 		color: white;
 		cursor: pointer;
 		transition: background-color 0.15s;
 	}
 
-	.print-btn:hover {
+	.action-btn:hover {
 		background: #1976d2;
 	}
 
-	.print-btn svg {
-		width: 18px;
-		height: 18px;
+	.action-btn svg {
+		width: 16px;
+		height: 16px;
 	}
 
 	.footer-links {

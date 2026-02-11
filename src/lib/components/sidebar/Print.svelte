@@ -2,6 +2,7 @@
 	import { sidebarStore } from '$lib/stores/sidebarStore';
 	import { mapStore } from '$lib/stores/mapStore';
 	import { layerStore } from '$lib/stores/layerStore';
+	import { drawStore, drawFeatureCount, drawLayerVisible } from '$lib/stores/drawStore';
 	import {
 		printStore,
 		printSettings,
@@ -84,7 +85,10 @@
 
 		const layers = layerStore.getVisibleLayerNames();
 		const opacities = layerStore.getLayerOpacities();
-		await printStore.submitPrint(bbox, layers, opacities);
+		const drawGeoJSON = ($drawFeatureCount > 0 && $drawLayerVisible)
+			? drawStore.exportGeoJSON()
+			: null;
+		await printStore.submitPrint(bbox, layers, opacities, 25832, drawGeoJSON);
 	}
 
 	function handleDownload() {

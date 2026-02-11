@@ -63,6 +63,7 @@ components:
     catalog: true
     searchCatalog: true
     print: true
+    draw: true
 
 # URL sync configuration
 # mode: 'xyz' = position/zoom only | 'map' = + visible layers with opacity | 'full' = + all groups in order

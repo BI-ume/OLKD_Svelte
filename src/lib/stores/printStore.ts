@@ -155,7 +155,8 @@ function createPrintStore() {
 			bbox: [number, number, number, number],
 			layers: string[],
 			opacities: Record<string, number> = {},
-			srs: number = 25832
+			srs: number = 25832,
+			drawFeatures: string | null = null
 		): Promise<void> => {
 			const state = get({ subscribe });
 			const { settings } = state;
@@ -177,7 +178,8 @@ function createPrintStore() {
 						pageLayout: settings.layout,
 						pageSize: [settings.pageSize.width, settings.pageSize.height],
 						layers,
-						opacities
+						opacities,
+						...(drawFeatures ? { drawFeatures: JSON.parse(drawFeatures) } : {})
 					})
 				});
 

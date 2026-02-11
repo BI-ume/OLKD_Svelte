@@ -4,13 +4,15 @@ interface SidebarState {
 	isOpen: boolean;
 	showCatalog: boolean;
 	showPrint: boolean;
+	showDraw: boolean;
 }
 
 function createSidebarStore() {
 	const { subscribe, set, update } = writable<SidebarState>({
 		isOpen: false,
 		showCatalog: false,
-		showPrint: false
+		showPrint: false,
+		showDraw: false
 	});
 
 	return {
@@ -48,7 +50,7 @@ function createSidebarStore() {
 		 * Show catalog view (slides in from right)
 		 */
 		showCatalog: (): void => {
-			update((s) => ({ ...s, showCatalog: true, showPrint: false }));
+			update((s) => ({ ...s, showCatalog: true, showPrint: false, showDraw: false }));
 		},
 
 		/**
@@ -62,7 +64,7 @@ function createSidebarStore() {
 		 * Show print panel (slides in from right)
 		 */
 		showPrint: (): void => {
-			update((s) => ({ ...s, showPrint: true, showCatalog: false }));
+			update((s) => ({ ...s, showPrint: true, showCatalog: false, showDraw: false }));
 		},
 
 		/**
@@ -70,6 +72,20 @@ function createSidebarStore() {
 		 */
 		hidePrint: (): void => {
 			update((s) => ({ ...s, showPrint: false }));
+		},
+
+		/**
+		 * Show draw panel (slides in from right)
+		 */
+		showDraw: (): void => {
+			update((s) => ({ ...s, showDraw: true, showCatalog: false, showPrint: false }));
+		},
+
+		/**
+		 * Hide draw panel (slides back)
+		 */
+		hideDraw: (): void => {
+			update((s) => ({ ...s, showDraw: false }));
 		},
 
 		/**
@@ -87,3 +103,4 @@ export const sidebarStore = createSidebarStore();
 export const sidebarIsOpen = derived(sidebarStore, ($s) => $s.isOpen);
 export const sidebarShowCatalog = derived(sidebarStore, ($s) => $s.showCatalog);
 export const sidebarShowPrint = derived(sidebarStore, ($s) => $s.showPrint);
+export const sidebarShowDraw = derived(sidebarStore, ($s) => $s.showDraw);

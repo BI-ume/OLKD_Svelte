@@ -39,9 +39,15 @@
 		const res = map.getView().getResolution() ?? 1;
 		const s = $printSettings;
 
+		// Subtract buffer (50px or 20% of viewport, whichever is smaller)
+		const bufferW = Math.min(50, vpWidth * 0.2);
+		const bufferH = Math.min(50, vpHeight * 0.2);
+		const usableW = vpWidth - 2 * bufferW;
+		const usableH = vpHeight - 2 * bufferH;
+
 		// Max scale that fits: (viewportPx * resolution * 1000) / pageSizeMm
-		const maxScaleW = (vpWidth * res * 1000) / s.pageSize.width;
-		const maxScaleH = (vpHeight * res * 1000) / s.pageSize.height;
+		const maxScaleW = (usableW * res * 1000) / s.pageSize.width;
+		const maxScaleH = (usableH * res * 1000) / s.pageSize.height;
 		const maxScale = Math.min(maxScaleW, maxScaleH);
 
 		// Pick largest predefined scale <= maxScale

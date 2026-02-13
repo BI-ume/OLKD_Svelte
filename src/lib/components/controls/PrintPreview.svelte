@@ -99,7 +99,7 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		border: 2px dashed #2196f3;
+		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
 		z-index: 1;
 	}

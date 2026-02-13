@@ -9,6 +9,7 @@
 	let draggedGroupName = $state<string | null>(null);
 	let dropTargetIndex = $state<number | null>(null);
 	let dropPosition = $state<'above' | 'below' | null>(null);
+	let mousedownTarget: HTMLElement | null = null;
 
 	let showCatalogButton = $derived($configStore.app?.components?.catalog !== false);
 
@@ -20,8 +21,17 @@
 		layerStore.removeGroup(groupName);
 	}
 
+	// Track where the mousedown actually happened
+	function handleMouseDown(event: MouseEvent) {
+		mousedownTarget = event.target as HTMLElement;
+	}
+
 	// Drag and drop handlers
-	function handleDragStart(groupName: string) {
+	function handleDragStart(event: DragEvent, groupName: string) {
+		if (mousedownTarget?.closest('.menu-container') || mousedownTarget?.closest('.menu-dropdown')) {
+			event.preventDefault();
+			return;
+		}
 		draggedGroupName = groupName;
 	}
 
@@ -80,7 +90,8 @@
 					class:drag-over-below={dropTargetIndex === index && dropPosition === 'below'}
 					class:dragging={draggedGroupName === group.name}
 					draggable="true"
-					ondragstart={() => handleDragStart(group.name)}
+					onmousedown={handleMouseDown}
+					ondragstart={(e) => handleDragStart(e, group.name)}
 					ondragend={handleDragEnd}
 					ondragover={(e) => handleDragOver(e, index)}
 					ondragleave={handleDragLeave}

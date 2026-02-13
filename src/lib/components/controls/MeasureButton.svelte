@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
+	import { measureActive } from '$lib/stores/measureStore';
 	import { transform } from 'ol/proj';
 	import { Draw, Modify } from 'ol/interaction';
 	import { Vector as VectorSource } from 'ol/source';
@@ -122,6 +123,7 @@
 
 		deactivateMeasure();
 		activeMode = mode;
+		measureActive.set(true);
 		isOpen = true; // Keep menu open while measuring
 
 		if (mode === 'point') {
@@ -310,6 +312,7 @@
 
 	function deactivateMeasure() {
 		activeMode = 'none';
+		measureActive.set(false);
 		measureResult = '';
 
 		if (map) {

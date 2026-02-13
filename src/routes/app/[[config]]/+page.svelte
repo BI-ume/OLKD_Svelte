@@ -21,7 +21,8 @@
 		SearchBox,
 		PrintPreview,
 		DrawLayer,
-		DrawStylePopup
+		DrawStylePopup,
+		FeatureInfo
 	} from '$lib/components/controls';
 	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
 
@@ -147,6 +148,7 @@
 			{/if}
 			<Attribution />
 			<PrintPreview />
+			<FeatureInfo />
 			{#if showDraw}
 				<DrawLayer />
 				<DrawStylePopup />

@@ -1,5 +1,5 @@
 import type BaseLayer from 'ol/layer/Base';
-import type { LayerConfig, OlLayerConfig, LegendConfig } from './types';
+import type { LayerConfig, OlLayerConfig, LegendConfig, FeatureInfoConfig } from './types';
 
 /**
  * Base class for all layer types.
@@ -15,6 +15,7 @@ export abstract class Layer {
 	readonly attribution?: string;
 	readonly abstract?: string;
 	readonly previewImage?: string;
+	readonly featureinfo?: FeatureInfoConfig;
 
 	protected _visible: boolean;
 	protected _opacity: number;
@@ -31,6 +32,7 @@ export abstract class Layer {
 		this.attribution = config.attribution;
 		this.abstract = config.abstract;
 		this.previewImage = config.previewImage;
+		this.featureinfo = config.featureinfo;
 
 		this._visible = config.visible ?? config.olLayer?.visible ?? false;
 		this._opacity = config.opacity ?? config.olLayer?.opacity ?? 1;

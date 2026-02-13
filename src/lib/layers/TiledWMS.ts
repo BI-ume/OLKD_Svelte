@@ -1,5 +1,6 @@
 import TileLayer from 'ol/layer/Tile';
 import TileWMS from 'ol/source/TileWMS';
+import type { Coordinate } from 'ol/coordinate';
 import type { LayerConfig, WMSSourceConfig, LegendConfig } from './types';
 import { Layer } from './Layer';
 
@@ -59,6 +60,13 @@ export class TiledWMS extends Layer {
 			return (this._olLayer as TileLayer<TileWMS>).getSource();
 		}
 		return null;
+	}
+
+	/**
+	 * Get the WMS GetFeatureInfo URL for a coordinate
+	 */
+	getFeatureInfoUrl(coordinate: Coordinate, resolution: number, projection: string, params: Record<string, string>): string | undefined {
+		return this.getSource()?.getFeatureInfoUrl(coordinate, resolution, projection, params);
 	}
 
 	/**

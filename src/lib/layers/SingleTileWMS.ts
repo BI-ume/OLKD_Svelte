@@ -1,5 +1,6 @@
 import ImageLayer from 'ol/layer/Image';
 import ImageWMS from 'ol/source/ImageWMS';
+import type { Coordinate } from 'ol/coordinate';
 import type { LayerConfig, WMSSourceConfig, LegendConfig } from './types';
 import { Layer } from './Layer';
 
@@ -58,6 +59,13 @@ export class SingleTileWMS extends Layer {
 			return (this._olLayer as ImageLayer<ImageWMS>).getSource();
 		}
 		return null;
+	}
+
+	/**
+	 * Get the WMS GetFeatureInfo URL for a coordinate
+	 */
+	getFeatureInfoUrl(coordinate: Coordinate, resolution: number, projection: string, params: Record<string, string>): string | undefined {
+		return this.getSource()?.getFeatureInfoUrl(coordinate, resolution, projection, params);
 	}
 
 	/**

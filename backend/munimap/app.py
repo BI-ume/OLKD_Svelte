@@ -202,6 +202,41 @@ def create_app(config_path=None):
             log.error(f"Error loading catalog group: {e}")
             return jsonify({'error': str(e)}), 500
 
+    @app.route('/api/v1/app/<config>/catalog/names')
+    @app.route('/api/v1/app/catalog/names')
+    def get_catalog_names(config=None):
+        """Resolve layer/group names to titles for featureinfo catalog display."""
+        try:
+            names_param = request.args.get('names', '')
+            if not names_param:
+                return jsonify({'groups': [], 'layers': []})
+
+            names = [n.strip() for n in names_param.split(',') if n.strip()]
+            if not names:
+                return jsonify({'groups': [], 'layers': []})
+
+            anol_layers = app.anol_layers
+            result = {'groups': [], 'layers': []}
+
+            # Build lookup of all groups and layers
+            for group in anol_layers.get('overlays', []):
+                if group['name'] in names:
+                    result['groups'].append({
+                        'name': group['name'],
+                        'title': group['title']
+                    })
+                for layer in group.get('layers', []):
+                    if layer['name'] in names:
+                        result['layers'].append({
+                            'name': layer['name'],
+                            'title': layer['title']
+                        })
+
+            return jsonify(result)
+        except Exception as e:
+            log.error(f"Error resolving catalog names: {e}")
+            return jsonify({'error': str(e)}), 500
+
     @app.route('/health')
     def health():
         """Health check endpoint."""

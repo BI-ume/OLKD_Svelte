@@ -48,6 +48,8 @@ export {
 	metadataPopupTitle
 } from './metadataPopupStore';
 
+export { measureActive } from './measureStore';
+
 export {
 	printStore,
 	printIsOpen,

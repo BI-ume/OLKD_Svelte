@@ -72,9 +72,20 @@ export interface LegendConfig {
 
 // FeatureInfo configuration
 export interface FeatureInfoConfig {
-	catalog?: boolean;
-	catalogGroup?: string;
+	target?: '_popup' | '_blank' | string;  // default '_popup'
+	width?: number;    // iframe width in px (default 300)
+	height?: number;   // iframe height in px (default 150)
+	featureCount?: number;  // WMS FEATURE_COUNT param
+	gml?: boolean;     // Request GML format instead of HTML
+	catalog?: boolean; // Show catalog layer links (requires gml)
+	gmlGroup?: boolean; // Use group_name instead of layer name from GML
+	gmlStyle?: {       // Style for GML feature highlights on map
+		strokeWidth?: number;
+		strokeColor?: string;
+		fillColor?: string;
+	};
 	properties?: Record<string, unknown>;
+	catalogGroup?: string;
 }
 
 // Search configuration

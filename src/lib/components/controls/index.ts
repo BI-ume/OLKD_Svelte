@@ -13,3 +13,4 @@ export { default as SearchBox } from './SearchBox.svelte';
 export { default as PrintPreview } from './PrintPreview.svelte';
 export { default as DrawLayer } from './DrawLayer.svelte';
 export { default as DrawStylePopup } from './DrawStylePopup.svelte';
+export { default as FeatureInfo } from './FeatureInfo.svelte';

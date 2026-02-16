@@ -71,6 +71,14 @@
 		fitScaleToViewport();
 	}
 
+	// fit scale to viewport when the print tool opens
+	$effect(() => {
+		if ($sidebarShowPrint && map) {
+			resolution = map.getView().getResolution() ?? 1;
+			fitScaleToViewport();
+		}
+	});
+
 	onMount(() => {
 		map = mapStore.getMap();
 		if (map) {

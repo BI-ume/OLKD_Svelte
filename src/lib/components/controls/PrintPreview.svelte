@@ -6,6 +6,7 @@
 	import type OlMap from 'ol/Map';
 	import type { EventsKey } from 'ol/events';
 	import { unByKey } from 'ol/Observable';
+    import { fade } from 'svelte/transition';
 
 	let map = $state<OlMap | null>(null);
 	let resolution = $state(1);
@@ -98,6 +99,7 @@
 	<div
 		class="print-preview"
 		style="width: {widthPx}px; height: {heightPx}px;"
+		transition:fade
 	></div>
 {/if}
 
@@ -110,5 +112,6 @@
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
 		z-index: 1;
+		transition: width 0.3s ease, height 0.3s ease;
 	}
 </style>

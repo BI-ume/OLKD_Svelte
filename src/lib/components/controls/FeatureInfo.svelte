@@ -3,8 +3,8 @@
 	import { get } from 'svelte/store';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
 	import { layerStore } from '$lib/stores/layerStore';
+	import { sidebarShowDraw, sidebarShowPrint } from "$lib/stores/sidebarStore";
 	import { measureActive } from '$lib/stores/measureStore';
-	import { drawActiveTool } from '$lib/stores/drawStore';
 	import { catalogStore } from '$lib/stores/catalogStore';
 	import { configStore } from '$lib/stores/configStore';
 	import { TiledWMS } from '$lib/layers/TiledWMS';
@@ -107,8 +107,9 @@
 	}
 
 	async function handleClick(evt: MapBrowserEvent<PointerEvent>) {
-		// Don't fire when draw or measure is active
-		if (get(drawActiveTool) !== 'none') return;
+		// Don't fire when draw, print or measure is active
+		if (get(sidebarShowDraw)) return;
+		if (get(sidebarShowPrint)) return;
 		if (get(measureActive)) return;
 
 		if (!map) return;

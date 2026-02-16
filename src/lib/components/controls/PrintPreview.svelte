@@ -110,5 +110,6 @@
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
 		z-index: 1;
+		transition: width 0.3s ease, height 0.3s ease;
 	}
 </style>

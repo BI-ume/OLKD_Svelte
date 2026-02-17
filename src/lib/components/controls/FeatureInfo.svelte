@@ -18,6 +18,8 @@
 	import type { Coordinate } from 'ol/coordinate';
 	import type { Layer } from '$lib/layers/Layer';
 	import type { FeatureInfoConfig } from '$lib/layers/types';
+	import type { EventsKey } from 'ol/events';
+	import { unByKey } from 'ol/Observable';
 
 	let map: Map | null = null;
 	let overlay: Overlay | null = null;
@@ -25,7 +27,7 @@
 	let popupContentEl: HTMLDivElement;
 	let gmlLayer: VectorLayer<VectorSource> | null = null;
 	let gmlSource: VectorSource | null = null;
-	let clickKey: any = null;
+	let clickKey: EventsKey | null = null;
 	let isLoading = $state(false);
 	let hasContent = $state(false);
 
@@ -77,7 +79,7 @@
 	function cleanup() {
 		if (map) {
 			if (clickKey) {
-				map.un('singleclick', clickKey.listener);
+				unByKey(clickKey);
 				clickKey = null;
 			}
 			if (overlay) {

@@ -5,6 +5,8 @@
 	import { layerStore, activeBackground, visibleOverlayLayers, overlayGroups } from '$lib/stores/layerStore';
 	import { configStore } from '$lib/stores/configStore';
 	import type { UrlSyncMode } from '$lib/layers/types';
+	import type { EventsKey } from 'ol/events';
+	import { unByKey } from 'ol/Observable';
 
 	// Props
 	interface Props {
@@ -17,7 +19,7 @@
 
 	let initialized = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-	let moveEndListener: any = null;
+	let moveEndListener: EventsKey | null = null;
 	let unsubscribeBg: (() => void) | null = null;
 	let unsubscribeOverlay: (() => void) | null = null;
 	let unsubscribeGroups: (() => void) | null = null;
@@ -187,10 +189,8 @@
 			clearTimeout(debounceTimer);
 		}
 		if (moveEndListener) {
-			const map = mapStore.getMap();
-			if (map) {
-				map.un('moveend', moveEndListener.listener);
-			}
+			unByKey(moveEndListener);
+			moveEndListener = null;
 		}
 		if (unsubscribeBg) {
 			unsubscribeBg();

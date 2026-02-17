@@ -11,6 +11,8 @@
 	import { getArea, getLength } from 'ol/sphere';
 	import Overlay from 'ol/Overlay';
 	import type { Map } from 'ol';
+	import type { EventsKey } from 'ol/events';
+	import { unByKey } from 'ol/Observable';
 	import Feature from 'ol/Feature';
 
 	interface Props {
@@ -34,7 +36,7 @@
 	let modify: Modify | null = null;
 	let measureTooltipElement: HTMLDivElement | null = null;
 	let measureTooltip: Overlay | null = null;
-	let clickListener: any = null;
+	let clickListener: EventsKey | null = null;
 	let segmentOverlays: Overlay[] = [];
 
 	const measureStyle = new Style({
@@ -325,7 +327,7 @@
 				modify = null;
 			}
 			if (clickListener) {
-				map.un('singleclick', clickListener.listener);
+				unByKey(clickListener);
 				clickListener = null;
 			}
 		}

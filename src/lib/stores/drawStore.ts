@@ -9,6 +9,8 @@ import Overlay from 'ol/Overlay';
 import type { Map, MapBrowserEvent } from 'ol';
 import type { Geometry } from 'ol/geom';
 import type { Coordinate } from 'ol/coordinate';
+import type { EventsKey } from 'ol/events';
+import { unByKey } from 'ol/Observable';
 import { click } from 'ol/events/condition';
 
 export type DrawTool = 'none' | 'point' | 'line' | 'polygon' | 'text' | 'modify';
@@ -97,8 +99,8 @@ function createDrawStore() {
 	let selectInteraction: Select | null = null;
 	let popupOverlay: Overlay | null = null;
 	let featureIdCounter = 0;
-	let clickListenerKey: any = null;
-	let pointerMoveKey: any = null;
+	let clickListenerKey: EventsKey | null = null;
+	let pointerMoveKey: EventsKey | null = null;
 	let suppressClickUntil = 0;
 
 	function buildOlStyle(drawStyle: DrawStyle, geomType?: string): Style {
@@ -294,12 +296,12 @@ function createDrawStore() {
 
 		destroy: (): void => {
 			removeInteractions();
-			if (map && clickListenerKey) {
-				map.un('singleclick', clickListenerKey.listener);
+			if (clickListenerKey) {
+				unByKey(clickListenerKey);
 				clickListenerKey = null;
 			}
-			if (map && pointerMoveKey) {
-				map.un('pointermove', pointerMoveKey.listener);
+			if (pointerMoveKey) {
+				unByKey(pointerMoveKey);
 				pointerMoveKey = null;
 			}
 			if (map && layer) {

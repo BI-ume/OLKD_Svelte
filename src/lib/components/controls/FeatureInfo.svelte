@@ -20,6 +20,7 @@
 	import type { FeatureInfoConfig } from '$lib/layers/types';
 	import type { EventsKey } from 'ol/events';
 	import { unByKey } from 'ol/Observable';
+	import { Z_INDEX } from '$lib/constants';
 
 	let map: Map | null = null;
 	let overlay: Overlay | null = null;
@@ -59,7 +60,7 @@
 				stroke: new Stroke({ color: 'rgba(255, 0, 0, 0.8)', width: 2 }),
 				fill: new Fill({ color: 'rgba(255, 0, 0, 0.1)' })
 			}),
-			zIndex: 2001
+			zIndex: Z_INDEX.FEATURE_INFO_HIGHLIGHT
 		});
 		map.addLayer(gmlLayer);
 

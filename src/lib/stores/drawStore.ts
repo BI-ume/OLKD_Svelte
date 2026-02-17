@@ -12,6 +12,7 @@ import type { Coordinate } from 'ol/coordinate';
 import type { EventsKey } from 'ol/events';
 import { unByKey } from 'ol/Observable';
 import { click } from 'ol/events/condition';
+import { Z_INDEX } from '$lib/constants';
 
 export type DrawTool = 'none' | 'point' | 'line' | 'polygon' | 'text' | 'modify';
 
@@ -282,7 +283,7 @@ function createDrawStore() {
 			layer = new VectorLayer({
 				source,
 				style: (feature) => styleFunction(feature as Feature<Geometry>),
-				zIndex: 1002
+				zIndex: Z_INDEX.DRAW
 			});
 			map.addLayer(layer);
 

@@ -11,6 +11,7 @@
 	import type { Map } from 'ol';
 	import type { Geometry } from 'ol/geom';
 	import Point from 'ol/geom/Point';
+	import { Z_INDEX } from '$lib/constants';
 
 	interface Props {
 		sidebarOpen?: boolean;
@@ -82,7 +83,7 @@
 		resultLayer = new VectorLayer({
 			source: resultSource,
 			style: resultStyle,
-			zIndex: 1000
+			zIndex: Z_INDEX.SEARCH_MARKER
 		});
 		map.addLayer(resultLayer);
 

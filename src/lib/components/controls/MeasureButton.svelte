@@ -14,6 +14,7 @@
 	import type { EventsKey } from 'ol/events';
 	import { unByKey } from 'ol/Observable';
 	import Feature from 'ol/Feature';
+	import { Z_INDEX } from '$lib/constants';
 
 	interface Props {
 		sidebarOpen?: boolean;
@@ -79,7 +80,7 @@
 		measureLayer = new VectorLayer({
 			source: measureSource,
 			style: measureStyle,
-			zIndex: 1000
+			zIndex: Z_INDEX.MEASURE
 		});
 		map.addLayer(measureLayer);
 
@@ -87,7 +88,7 @@
 		segmentSource = new VectorSource();
 		segmentLayer = new VectorLayer({
 			source: segmentSource,
-			zIndex: 1001
+			zIndex: Z_INDEX.MEASURE_SEGMENTS
 		});
 		map.addLayer(segmentLayer);
 	}

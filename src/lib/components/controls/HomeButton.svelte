@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { mapStore } from '$lib/stores/mapStore';
-	import { configStore } from '$lib/stores/configStore';
+	import { sidebarIsOpen, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 
 	interface Props {
 		sidebarOpen?: boolean;
@@ -16,8 +16,15 @@
 		const map = mapStore.getMap();
 		if (!view || !map) return;
 
+		// Offset center to account for sidebar covering part of the viewport
+		const center = [...homeCenter];
+		if ($sidebarIsOpen) {
+			const res = view.getResolutionForZoom(homeZoom) ?? 1;
+			center[0] -= (SIDEBAR_WIDTH / 2) * res;
+		}
+
 		view.animate({
-			center: homeCenter,
+			center,
 			zoom: homeZoom,
 			duration: 500
 		});
@@ -58,7 +65,7 @@
 	}
 
 	.home-btn.sidebar-open {
-		left: 310px;
+		left: var(--sidebar-width);
 	}
 
 	.home-btn:hover {

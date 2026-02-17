@@ -2,11 +2,14 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { mapStore } from '$lib/stores/mapStore';
 	import { printStore, printSettings, AVAILABLE_SCALES } from '$lib/stores/printStore';
-	import { sidebarShowPrint } from '$lib/stores/sidebarStore';
+	import { sidebarShowPrint, sidebarIsOpen } from '$lib/stores/sidebarStore';
 	import type OlMap from 'ol/Map';
 	import type { EventsKey } from 'ol/events';
 	import { unByKey } from 'ol/Observable';
-    import { fade } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
+
+	// Half of sidebar width (320px) used to offset the visual center
+	const SIDEBAR_OFFSET_PX = 160;
 
 	let map = $state<OlMap | null>(null);
 	let resolution = $state(1);
@@ -25,6 +28,7 @@
 	});
 
 	let visible = $derived($sidebarShowPrint);
+	let sidebarOffset = $derived($sidebarIsOpen ? SIDEBAR_OFFSET_PX : 0);
 
 	/**
 	 * Find the largest predefined scale where the print rectangle
@@ -40,10 +44,14 @@
 		const res = map.getView().getResolution() ?? 1;
 		const s = $printSettings;
 
+		// Account for sidebar covering part of the viewport
+		const sidebarPx = $sidebarIsOpen ? 320 : 0;
+		const effectiveWidth = vpWidth - sidebarPx;
+
 		// Subtract buffer (50px or 20% of viewport, whichever is smaller)
-		const bufferW = Math.min(50, vpWidth * 0.2);
+		const bufferW = Math.min(50, effectiveWidth * 0.2);
 		const bufferH = Math.min(50, vpHeight * 0.2);
-		const usableW = vpWidth - 2 * bufferW;
+		const usableW = effectiveWidth - 2 * bufferW;
 		const usableH = vpHeight - 2 * bufferH;
 
 		// Max scale that fits: (viewportPx * resolution * 1000) / pageSizeMm
@@ -98,7 +106,7 @@
 {#if visible}
 	<div
 		class="print-preview"
-		style="width: {widthPx}px; height: {heightPx}px;"
+		style="width: {widthPx}px; height: {heightPx}px; left: calc(50% + {sidebarOffset}px);"
 		transition:fade
 	></div>
 {/if}
@@ -112,6 +120,6 @@
 		box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
 		z-index: 1;
-		transition: width 0.3s ease, height 0.3s ease;
+		transition: width 0.3s ease, height 0.3s ease, left 0.3s ease;
 	}
 </style>

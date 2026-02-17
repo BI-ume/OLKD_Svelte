@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { mapStore, mapZoom } from '$lib/stores/mapStore';
 	import { configStore } from '$lib/stores/configStore';
+	import { sidebarIsOpen, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 
 	interface Props {
 		sidebarOpen?: boolean;
@@ -16,11 +17,24 @@
 	let atMinZoom = $derived($mapZoom <= minZoom);
 	let atMaxZoom = $derived($mapZoom >= maxZoom);
 
+	/** Get the visual center of the map (offset for sidebar) */
+	function getVisualCenter(): number[] | undefined {
+		if (!$sidebarIsOpen) return undefined;
+		const map = mapStore.getMap();
+		const view = mapStore.getView();
+		if (!map || !view) return undefined;
+		const center = view.getCenter();
+		const res = view.getResolution();
+		if (!center || !res) return undefined;
+		return [center[0] + (SIDEBAR_WIDTH / 2) * res, center[1]];
+	}
+
 	function zoomIn() {
 		const view = mapStore.getView();
 		if (view) {
 			const currentZoom = view.getZoom() ?? 0;
 			view.animate({
+				center: getVisualCenter(),
 				zoom: Math.min(currentZoom + 1, maxZoom),
 				duration: 250
 			});
@@ -32,6 +46,7 @@
 		if (view) {
 			const currentZoom = view.getZoom() ?? 0;
 			view.animate({
+				center: getVisualCenter(),
 				zoom: Math.max(currentZoom - 1, minZoom),
 				duration: 250
 			});
@@ -78,7 +93,7 @@
 	}
 
 	.zoom-controls.sidebar-open {
-		left: 310px;
+		left: var(--sidebar-width);
 	}
 
 	.zoom-btn {

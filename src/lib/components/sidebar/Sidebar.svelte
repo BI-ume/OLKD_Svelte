@@ -3,7 +3,6 @@
 	import { browser } from '$app/environment';
 	import { sidebarStore, sidebarIsOpen, sidebarShowCatalog, sidebarShowPrint, sidebarShowDraw } from '$lib/stores/sidebarStore';
 	import { configStore, componentsConfig } from '$lib/stores/configStore';
-	import { mapStore } from '$lib/stores/mapStore';
 	import { SearchBox } from '$lib/components/controls';
 	import BackgroundSelection from './BackgroundSelection.svelte';
 	import OverlaySelection from './OverlaySelection.svelte';
@@ -46,19 +45,11 @@
 		const defaultOpen = $configStore.app?.sidebar?.defaultOpen ?? true;
 		sidebarStore.initialize(defaultOpen);
 	});
-
-	// Update map size after sidebar transition
-	function handleTransitionEnd() {
-		const map = mapStore.getMap();
-		if (map) {
-			map.updateSize();
-		}
-	}
 </script>
 
-<div class="sidebar-wrapper" class:open={$sidebarIsOpen} ontransitionend={handleTransitionEnd}>
-	<aside class="sidebar">
-		<!-- Header -->
+<div class="sidebar-wrapper" class:open={$sidebarIsOpen}>
+	<!-- Header card -->
+	<div class="sidebar-card header-card">
 		<header class="sidebar-header">
 			<a href={headerLogoLink} target="_blank" rel="noopener noreferrer" class="logo-link">
 				<img src="/img/logo_BIE.svg" alt="Bielefeld Logo" class="logo" />
@@ -70,16 +61,16 @@
 				</a>
 			</div>
 		</header>
-
-		<!-- Search -->
 		{#if showSearch}
 			<SearchBox embedded={true} />
 		{/if}
+	</div>
 
-		<!-- Content area with slide panels -->
-		<div class="content-wrapper">
-			<!-- Main content (backgrounds + overlays + legend + footer) -->
-			<div class="sidebar-main" class:hidden={showSecondary}>
+	<!-- Body area: transparent, holds sliding panels -->
+	<div class="body-area">
+		<!-- Main panel (transparent wrapper for slide transition) -->
+		<div class="main-panel" class:hidden={showSecondary}>
+			<div class="sidebar-card content-card">
 				<div class="scrollable">
 					<BackgroundSelection />
 					<OverlaySelection />
@@ -87,93 +78,104 @@
 						<Legend />
 					{/if}
 				</div>
-				<footer class="sidebar-footer">
-					{#if showPrintButton || showDrawButton}
-						<div class="action-row">
-							{#if showPrintButton}
-								<button class="action-btn" onclick={handleOpenPrint}>
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<polyline points="6 9 6 2 18 2 18 9"></polyline>
-										<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-										<rect x="6" y="14" width="12" height="8"></rect>
-									</svg>
-									Drucken
-								</button>
-							{/if}
-							{#if showDrawButton}
-								<button class="action-btn" onclick={handleOpenDraw}>
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M12 20h9"></path>
-										<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-									</svg>
-									Zeichnen
-								</button>
-							{/if}
-						</div>
-					{/if}
-					<div class="footer-links">
-						<a href={nutzungsbedingungenUrl} target="_blank" rel="noopener noreferrer">
-							Nutzungsbedingungen
-						</a>
-						<a href={mailtoHref} class="email-link" title="Feedback senden">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-								<polyline points="22,6 12,13 2,6"></polyline>
-							</svg>
-						</a>
+			</div>
+			<div class="sidebar-card footer-card">
+				{#if showPrintButton || showDrawButton}
+					<div class="action-row">
+						{#if showPrintButton}
+							<button class="action-btn" onclick={handleOpenPrint}>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<polyline points="6 9 6 2 18 2 18 9"></polyline>
+									<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+									<rect x="6" y="14" width="12" height="8"></rect>
+								</svg>
+								Drucken
+							</button>
+						{/if}
+						{#if showDrawButton}
+							<button class="action-btn" onclick={handleOpenDraw}>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M12 20h9"></path>
+									<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+								</svg>
+								Zeichnen
+							</button>
+						{/if}
 					</div>
-					<button class="login-btn" disabled title="Login (in Entwicklung)">
+				{/if}
+				<div class="footer-links">
+					<a href={nutzungsbedingungenUrl} target="_blank" rel="noopener noreferrer">
+						Nutzungsbedingungen
+					</a>
+					<a href={mailtoHref} class="email-link" title="Feedback senden">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-							<polyline points="10 17 15 12 10 7"></polyline>
-							<line x1="15" y1="12" x2="3" y2="12"></line>
+							<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+							<polyline points="22,6 12,13 2,6"></polyline>
 						</svg>
-						Login
-					</button>
-				</footer>
-			</div>
-
-			<!-- Catalog panel (slides in from right) -->
-			<div class="sidebar-secondary" class:visible={$sidebarShowCatalog}>
-				<Catalog />
-			</div>
-
-			<!-- Print panel (slides in from right) -->
-			<div class="sidebar-secondary" class:visible={$sidebarShowPrint}>
-				<Print />
-			</div>
-
-			<!-- Draw panel (slides in from right) -->
-			<div class="sidebar-secondary" class:visible={$sidebarShowDraw}>
-				<Draw />
+					</a>
+				</div>
+				<button class="login-btn" disabled title="Login (in Entwicklung)">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+						<polyline points="10 17 15 12 10 7"></polyline>
+						<line x1="15" y1="12" x2="3" y2="12"></line>
+					</svg>
+					Login
+				</button>
 			</div>
 		</div>
-	</aside>
+
+		<!-- Secondary panels (slide in from right, auto-height) -->
+		<div class="sidebar-card secondary-panel" class:visible={$sidebarShowCatalog}>
+			<Catalog />
+		</div>
+		<div class="sidebar-card secondary-panel" class:visible={$sidebarShowPrint}>
+			<Print />
+		</div>
+		<div class="sidebar-card secondary-panel" class:visible={$sidebarShowDraw}>
+			<Draw />
+		</div>
+	</div>
 </div>
 
 <style>
 	.sidebar-wrapper {
-		width: 0;
-		flex-shrink: 0;
-		overflow: hidden;
-		transition: width 0.3s ease;
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: var(--sidebar-width);
+		padding: 10px;
+		z-index: 5;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		pointer-events: none;
+		transform: translateX(-100%);
+		transition: transform 0.3s ease;
 	}
 
 	.sidebar-wrapper.open {
-		width: 300px;
+		transform: translateX(0);
 	}
 
-	.sidebar {
-		width: 300px;
-		min-width: 300px;
-		height: 100%;
+	/* Cards */
+	.sidebar-card {
 		background: white;
-		display: flex;
-		flex-direction: column;
-		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+		border-radius: 12px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+		overflow: hidden;
+		pointer-events: auto;
 	}
 
-	/* Header */
+	/* Header card: allow search results to overflow */
+	.header-card {
+		flex-shrink: 0;
+		overflow: visible;
+		z-index: 2;
+		border-top-right-radius: 0;
+	}
+
 	.sidebar-header {
 		--logo-width: 36px;
 		--logo-color: #e30613;
@@ -181,8 +183,6 @@
 		align-items: flex-end;
 		gap: calc(var(--logo-width) / 2);
 		padding: calc(var(--logo-width) / 3);
-		border-bottom: 1px solid #e0e0e0;
-		background: #f8f8f8;
 		color: var(--logo-color);
 	}
 
@@ -223,39 +223,47 @@
 		text-decoration: underline;
 	}
 
-	/* Content area */
-	.content-wrapper {
-		position: relative;
+	/* Body area: transparent container for sliding panels */
+	.body-area {
 		flex: 1;
+		position: relative;
+		min-height: 0;
 		overflow: hidden;
+		z-index: 1;
 	}
 
-	.sidebar-main,
-	.sidebar-secondary {
+	/* Main panel: transparent wrapper for slide transition */
+	.main-panel {
 		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 		transition: transform 0.3s ease;
+		/* No background — map shows through gap between content and footer */
 	}
 
-	.sidebar-main {
-		transform: translateX(0);
+	.main-panel.hidden {
+		transform: translateX(-100%);
+		pointer-events: none;
+	}
+
+	/* Content card: sizes to content, scrolls when it reaches the footer */
+	.content-card {
+		flex: 0 1 auto;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 	}
 
-	.sidebar-main.hidden {
-		transform: translateX(-100%);
-	}
-
-	.sidebar-secondary {
-		transform: translateX(100%);
-	}
-
-	.sidebar-secondary.visible {
-		transform: translateX(0);
+	/* Footer card: pushed to bottom */
+	.footer-card {
+		margin-top: auto;
+		flex-shrink: 0;
+		padding: 12px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 	}
 
 	.scrollable {
@@ -279,16 +287,6 @@
 
 	.scrollable::-webkit-scrollbar-thumb:hover {
 		background: #aaa;
-	}
-
-	/* Footer */
-	.sidebar-footer {
-		padding: 12px 16px;
-		border-top: 1px solid #e0e0e0;
-		background: #f8f8f8;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
 	}
 
 	.action-row {
@@ -390,5 +388,27 @@
 	.login-btn svg {
 		width: 16px;
 		height: 16px;
+	}
+
+	/* Secondary panels: auto-height, slide from right */
+	.secondary-panel {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		max-height: 100%;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		transform: translateX(100%);
+		transition: transform 0.3s ease;
+		pointer-events: none;
+		box-shadow: none;
+	}
+
+	.secondary-panel.visible {
+		transform: translateX(0);
+		pointer-events: auto;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 	}
 </style>

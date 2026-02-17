@@ -27,6 +27,8 @@ function createCatalogStore() {
 		configId: 'default'
 	});
 
+	const togglingItems = new Set<string>();
+
 	return {
 		subscribe,
 
@@ -69,17 +71,20 @@ function createCatalogStore() {
 		 * Toggle a catalog item: add to map if not present, remove if present
 		 */
 		toggleItem: async (name: string): Promise<void> => {
-			const state = get({ subscribe });
+			if (togglingItems.has(name)) return;
+			togglingItems.add(name);
 
-			// Check if group is currently in the layerswitcher
-			const existingGroup = layerStore.getGroupByName(name);
+			try {
+				const state = get({ subscribe });
 
-			if (existingGroup) {
-				// Remove from layerswitcher
-				layerStore.removeGroup(name);
-			} else {
-				// Fetch full definition and add to layerswitcher
-				try {
+				// Check if group is currently in the layerswitcher
+				const existingGroup = layerStore.getGroupByName(name);
+
+				if (existingGroup) {
+					// Remove from layerswitcher
+					layerStore.removeGroup(name);
+				} else {
+					// Fetch full definition and add to layerswitcher
 					const response = await fetch(
 						`/api/v1/app/${state.configId}/catalog/group/${name}`
 					);
@@ -95,13 +100,15 @@ function createCatalogStore() {
 					const groupConfig: GroupConfig = data.group;
 					const group = createGroup(groupConfig);
 					layerStore.addGroup(group);
-				} catch (e) {
-					console.error(`Error adding catalog group "${name}":`, e);
-					update((s) => ({
-						...s,
-						error: e instanceof Error ? e.message : 'Failed to add group'
-					}));
 				}
+			} catch (e) {
+				console.error(`Error adding catalog group "${name}":`, e);
+				update((s) => ({
+					...s,
+					error: e instanceof Error ? e.message : 'Failed to add group'
+				}));
+			} finally {
+				togglingItems.delete(name);
 			}
 		},
 

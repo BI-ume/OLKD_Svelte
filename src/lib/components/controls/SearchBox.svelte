@@ -349,7 +349,7 @@
 	}
 
 	.search-box.sidebar-open {
-		left: 360px;
+		left: var(--sidebar-width);
 	}
 
 	.search-input-wrapper {

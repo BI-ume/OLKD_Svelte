@@ -2,14 +2,11 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { mapStore } from '$lib/stores/mapStore';
 	import { printStore, printSettings, AVAILABLE_SCALES } from '$lib/stores/printStore';
-	import { sidebarShowPrint, sidebarIsOpen } from '$lib/stores/sidebarStore';
+	import { sidebarShowPrint, sidebarIsOpen, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 	import type OlMap from 'ol/Map';
 	import type { EventsKey } from 'ol/events';
 	import { unByKey } from 'ol/Observable';
 	import { fade } from 'svelte/transition';
-
-	// Half of sidebar width (320px) used to offset the visual center
-	const SIDEBAR_OFFSET_PX = 160;
 
 	let map = $state<OlMap | null>(null);
 	let resolution = $state(1);
@@ -28,7 +25,7 @@
 	});
 
 	let visible = $derived($sidebarShowPrint);
-	let sidebarOffset = $derived($sidebarIsOpen ? SIDEBAR_OFFSET_PX : 0);
+	let sidebarOffset = $derived($sidebarIsOpen ? SIDEBAR_WIDTH / 2 : 0);
 
 	/**
 	 * Find the largest predefined scale where the print rectangle
@@ -45,7 +42,7 @@
 		const s = $printSettings;
 
 		// Account for sidebar covering part of the viewport
-		const sidebarPx = $sidebarIsOpen ? 320 : 0;
+		const sidebarPx = $sidebarIsOpen ? SIDEBAR_WIDTH : 0;
 		const effectiveWidth = vpWidth - sidebarPx;
 
 		// Subtract buffer (50px or 20% of viewport, whichever is smaller)

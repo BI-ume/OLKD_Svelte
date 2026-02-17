@@ -9,7 +9,6 @@
 		printStatus,
 		printJob,
 		printError,
-		PAGE_SIZES,
 		MIN_SCALE,
 		MAX_SCALE,
 		MIN_PAGE_SIZE,

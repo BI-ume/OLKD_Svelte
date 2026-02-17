@@ -199,11 +199,24 @@ function createPrintStore() {
 					}
 				}));
 
-				// Start polling for status
+				// Start polling for status (max 2 minutes)
+				const MAX_POLL_ATTEMPTS = 120;
+				let pollCount = 0;
 				pollInterval = setInterval(async () => {
+					pollCount++;
 					const currentState = get({ subscribe });
 					if (!currentState.job) {
 						stopPolling();
+						return;
+					}
+
+					if (pollCount >= MAX_POLL_ATTEMPTS) {
+						stopPolling();
+						update((s) => ({
+							...s,
+							status: 'error',
+							error: 'Zeitüberschreitung: Druckauftrag dauert zu lange'
+						}));
 						return;
 					}
 

@@ -89,15 +89,12 @@
 			<button onclick={() => window.location.reload()}>Erneut versuchen</button>
 		</div>
 	{:else if initialized}
-		{#if showSidebar}
-			<Sidebar />
-		{/if}
 		<div class="map-area">
 			<Map />
 			{#if showSidebar}
 				<button
 					class="sidebar-toggle"
-					class:sidebar-open={sidebarIsOpen}
+					class:sidebar-open={$sidebarIsOpen}
 					onclick={() => sidebarStore.toggle()}
 					title={$sidebarIsOpen ? 'Menü schließen' : 'Menü öffnen'}
 					aria-label={$sidebarIsOpen ? 'Menü schließen' : 'Menü öffnen'}
@@ -120,31 +117,31 @@
 			<UrlSync />
 			<ContextMenu />
 			{#if showSearch && !showSidebar}
-				<SearchBox />
+				<SearchBox sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showZoomControls}
-				<ZoomControls />
+				<ZoomControls sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showHomeButton}
-				<HomeButton />
+				<HomeButton sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showGeolocation}
-				<Geolocation />
+				<Geolocation sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showGotoButton}
-				<GotoButton />
+				<GotoButton sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showMeasure}
-				<MeasureButton />
+				<MeasureButton sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showSaveSettings}
-				<SaveSettings />
+				<SaveSettings sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showScaleLine}
-				<ScaleLine />
+				<ScaleLine sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			{#if showOverviewMap}
-				<OverviewMap />
+				<OverviewMap sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			<Attribution />
 			<PrintPreview />
@@ -161,6 +158,9 @@
 				/>
 			{/if}
 		</div>
+		{#if showSidebar}
+			<Sidebar />
+		{/if}
 	{:else}
 		<div class="error">
 			<h2>Keine Konfiguration</h2>
@@ -171,14 +171,15 @@
 
 <style>
 	.map-app {
+		--sidebar-width: 320px;
 		width: 100%;
 		height: 100%;
-		display: flex;
+		position: relative;
 	}
 
 	.map-area {
-		flex: 1;
-		position: relative;
+		position: absolute;
+		inset: 0;
 		overflow: hidden;
 	}
 
@@ -193,13 +194,16 @@
 		justify-content: center;
 		background: white;
 		border: none;
-		border-top-right-radius: 4px;
-		border-bottom-right-radius: 4px;
+		border-radius: 0 12px 12px 0;
 		cursor: pointer;
 		color: #333;
 		z-index: 10;
-		box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-		transition: background-color 0.15s;
+		box-shadow: 4px 2px 3px rgba(0, 0, 0, 0.2);
+		transition: left 0.3s ease, background-color 0.15s;
+	}
+
+	.sidebar-toggle.sidebar-open {
+		left: calc(var(--sidebar-width) - 10px);
 	}
 
 	.sidebar-toggle:hover {
@@ -209,10 +213,6 @@
 	.sidebar-toggle svg {
 		width: 18px;
 		height: 18px;
-	}
-
-	.sidebar-toggle.sidebar-open {
-		background: #f8f8f8;
 	}
 
 	.loading {

@@ -1,5 +1,8 @@
 import { writable, derived, get } from 'svelte/store';
 
+/** Total width of the sidebar including padding (px) */
+export const SIDEBAR_WIDTH = 320;
+
 interface SidebarState {
 	isOpen: boolean;
 	showCatalog: boolean;

@@ -198,10 +198,11 @@
 		border: none;
 		padding: 0;
 		cursor: pointer;
+		transition: left 0.3s ease;
 	}
 
 	.scale-line.sidebar-open {
-		left: calc(50% + 150px);
+		left: calc(50% + var(--sidebar-width) / 2);
 	}
 
 	/* OpenLayers ScaleLine overrides */

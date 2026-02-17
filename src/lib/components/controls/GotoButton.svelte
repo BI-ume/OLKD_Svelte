@@ -144,7 +144,7 @@
 	}
 
 	.goto-control.sidebar-open {
-		left: 310px;
+		left: var(--sidebar-width);
 	}
 
 	.goto-btn {

@@ -9,10 +9,17 @@
 		sidebarOpen?: boolean;
 	}
 
-	// sidebarOpen is received but handled via CSS selector on parent .sidebar-open class
 	let { sidebarOpen = false }: Props = $props();
 
-	let overviewMapControl: OLOverviewMap | null = null;
+	let overviewMapControl = $state<OLOverviewMap | null>(null);
+
+	// Toggle sidebar-offset class on the OL control element
+	$effect(() => {
+		if (overviewMapControl) {
+			const el = (overviewMapControl as any).element as HTMLElement;
+			el.classList.toggle('sidebar-offset', sidebarOpen);
+		}
+	});
 
 	onMount(() => {
 		const unsubscribe = mapReady.subscribe((ready) => {
@@ -77,8 +84,8 @@
 			transition: left 0.3s ease;
 		}
 
-		.sidebar-open .custom-overview-map {
-			left: 310px;
+		.custom-overview-map.sidebar-offset {
+			left: var(--sidebar-width);
 		}
 
 		.custom-overview-map.ol-uncollapsible {
@@ -86,8 +93,8 @@
 			left: 10px;
 		}
 
-		.sidebar-open .custom-overview-map.ol-uncollapsible {
-			left: 310px;
+		.custom-overview-map.ol-uncollapsible.sidebar-offset {
+			left: var(--sidebar-width);
 		}
 
 		.custom-overview-map .ol-overviewmap-map {

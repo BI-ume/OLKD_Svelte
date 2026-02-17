@@ -4,6 +4,7 @@
 	import { componentsConfig } from '$lib/stores/configStore';
 	import { searchStore, parseWKT, type SearchResult } from '$lib/stores/searchStore';
 	import { catalogItems, catalogStore } from '$lib/stores/catalogStore';
+	import { sidebarIsOpen, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 	import { Vector as VectorSource } from 'ol/source';
 	import { Vector as VectorLayer } from 'ol/layer';
 	import { Style, Fill, Stroke, Circle as CircleStyle } from 'ol/style';
@@ -184,19 +185,25 @@
 		if (geometry) {
 			const view = map.getView();
 			const extent = geometry.getExtent();
+			const leftPad = $sidebarIsOpen ? SIDEBAR_WIDTH + 50 : 50;
 
 			// For point geometries, center and zoom to fixed level
 			// For other geometries, fit to extent with max zoom limit
 			if (geometry instanceof Point) {
+				const center = geometry.getCoordinates().slice();
+				if ($sidebarIsOpen) {
+					const res = view.getResolutionForZoom(ZOOM_LEVEL) ?? 1;
+					center[0] += (SIDEBAR_WIDTH / 2) * res;
+				}
 				view.animate({
-					center: geometry.getCoordinates(),
+					center,
 					zoom: ZOOM_LEVEL,
 					duration: 500
 				});
 			} else {
 				view.fit(extent, {
 					duration: 500,
-					padding: [50, 50, 50, 50],
+					padding: [50, 50, 50, leftPad],
 					maxZoom: ZOOM_LEVEL
 				});
 			}
@@ -535,7 +542,7 @@
 	}
 
 	.search-box.embedded .search-input {
-		border-radius: 0;
+		border-radius: 0 0 12px 12px;
 		box-shadow: none;
 		border-bottom: 1px solid #e0e0e0;
 		padding: 12px 36px;
@@ -544,10 +551,11 @@
 	.search-box.embedded .search-input:focus {
 		box-shadow: none;
 		border-bottom-color: #2196f3;
+		border-radius: 0;
 	}
 
 	.search-box.embedded .search-results {
-		border-radius: 0;
+		border-radius: 0 0 12px 12px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		top: 100%;
 		z-index: 20;
@@ -555,7 +563,7 @@
 
 	.search-box.embedded .search-no-results,
 	.search-box.embedded .search-error {
-		border-radius: 0;
+		border-radius: 0 0 12px 12px;
 		top: 100%;
 		z-index: 20;
 	}

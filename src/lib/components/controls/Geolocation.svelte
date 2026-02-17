@@ -8,6 +8,7 @@
 	import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 	import { mapStore, mapReady } from '$lib/stores/mapStore';
 	import { configStore } from '$lib/stores/configStore';
+	import { sidebarIsOpen, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 
 	// Props with defaults
 	interface Props {
@@ -135,15 +136,22 @@
 		vectorSource.addFeature(new Feature(new Point(position)));
 
 		// Fit view to accuracy extent or zoom to position
+		// Add extra left padding when sidebar is open to center on visible area
+		const leftPad = $sidebarIsOpen ? SIDEBAR_WIDTH + 50 : 50;
 		if (accuracyGeometry) {
 			view.fit(accuracyGeometry.getExtent(), {
 				size: map.getSize(),
-				padding: [50, 50, 50, 50],
+				padding: [50, 50, 50, leftPad],
 				duration: 500,
 				maxZoom: configuredZoom
 			});
 		} else {
-			mapStore.animateTo(position, configuredZoom, 500);
+			const center = position.slice();
+			if ($sidebarIsOpen) {
+				const res = view.getResolutionForZoom(configuredZoom) ?? 1;
+				center[0] += (SIDEBAR_WIDTH / 2) * res;
+			}
+			mapStore.animateTo(center, configuredZoom, 500);
 		}
 
 		// Set auto-remove timer
@@ -256,7 +264,7 @@
 	}
 
 	.geolocation.sidebar-open {
-		left: 310px;
+		left: var(--sidebar-width);
 	}
 
 	.geolocation-btn {

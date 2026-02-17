@@ -494,7 +494,7 @@
 	}
 
 	.measure-control.sidebar-open {
-		left: 310px;
+		left: var(--sidebar-width);
 	}
 
 	.measure-btn {

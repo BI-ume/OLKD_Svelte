@@ -42,11 +42,20 @@
 			})
 		});
 
+		// Create SVG icon for the toggle button
+		const svgIcon = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="21" height="21" rx="2"/><rect x="3.5" y="12" width="8.5" height="8.5" rx="1" fill="#fff" stroke-width="1.8"/><rect x="7" y="14.5" width="3.5" height="3" rx=".3" stroke-dasharray="1.5 1" stroke-width="1"/></svg>`;
+		const labelEl = document.createElement('span');
+		labelEl.innerHTML = svgIcon;
+		const collapseLabelEl = document.createElement('span');
+		collapseLabelEl.innerHTML = svgIcon;
+
 		overviewMapControl = new OLOverviewMap({
 			className: 'custom-overview-map',
 			collapsed: true,
 			collapsible: true,
 			layers: [overviewLayer],
+			label: labelEl,
+			collapseLabel: collapseLabelEl,
 			tipLabel: 'Übersichtskarte ein-/ausblenden'
 		});
 
@@ -115,9 +124,12 @@
 			border-radius: 4px;
 			cursor: pointer;
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-			font-size: 14px;
 			color: #333;
 			z-index: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0;
 		}
 
 		.custom-overview-map button:hover {
@@ -130,7 +142,10 @@
 		}
 
 		.custom-overview-map button span {
-			font-size: 16px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			line-height: 0;
 		}
 	</style>
 </svelte:head>

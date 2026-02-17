@@ -142,18 +142,7 @@
 
 							{#if showSlider}
 								<!-- svelte-ignore a11y_no_static_element_interactions -->
-								<div
-									class="slider-row"
-									onmousedown={() => {
-										(window as any).__sliderDragging = true;
-									}}
-									onmouseup={() => {
-										(window as any).__sliderDragging = false;
-									}}
-									onmouseleave={() => {
-										(window as any).__sliderDragging = false;
-									}}
-								>
+								<div class="slider-row">
 									<input
 										type="range"
 										min="0"

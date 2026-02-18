@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { layerStore, activeBackground, overlayGroups } from '$lib/stores/layerStore';
+	import { activeBackground, visibleOverlayLayers, visibleLayerNames } from '$lib/stores/layerStore';
 	import type { Layer } from '$lib/layers/Layer';
 	import type { LegendConfig } from '$lib/layers/types';
 	import { slide } from 'svelte/transition';
@@ -11,22 +11,21 @@
 	let collapsedLayers = $state<Set<string>>(new Set());
 
 	// Derive visible layers with legend support
+	// Reacts to visibleOverlayLayers (visibility changes) and activeBackground (bg switch)
 	let visibleLegendLayers = $derived.by(() => {
 		const layers: Layer[] = [];
 
 		// Add active background if visible and has legend
 		const bg = $activeBackground;
-		if (bg && bg.visible && bg.legend !== false) {
+		if (bg && $visibleLayerNames.has(bg.name) && bg.legend !== false) {
 			layers.push(bg);
 		}
 
-		// Add visible overlay layers
-		$overlayGroups.forEach((group) => {
-			group.layers.forEach((layer) => {
-				if (layer.visible && layer.legend !== false) {
-					layers.push(layer);
-				}
-			});
+		// Add visible overlay layers (already filtered by visibility)
+		$visibleOverlayLayers.forEach((layer) => {
+			if (layer.legend !== false) {
+				layers.push(layer);
+			}
 		});
 
 		return layers;

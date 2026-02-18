@@ -22,8 +22,12 @@ export {
 	overlayGroups,
 	activeBackground,
 	layersInitialized,
-	visibleOverlayLayers
+	visibleOverlayLayers,
+	visibleLayerNames,
+	getLayerDisplay,
+	getGroupDisplay
 } from './layerStore';
+export type { LayerDisplayState } from './layerStore';
 
 export {
 	searchStore,

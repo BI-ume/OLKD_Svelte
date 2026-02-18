@@ -22,6 +22,9 @@ export abstract class Layer {
 	protected _olLayer: BaseLayer | null = null;
 	protected olLayerOptions: OlLayerConfig;
 
+	/** Callback invoked when visibility or opacity changes. Set by layerStore. */
+	_onDisplayChange?: (visible: boolean, opacity: number) => void;
+
 	constructor(config: LayerConfig) {
 		this.name = config.name;
 		this.title = config.title;
@@ -80,6 +83,7 @@ export abstract class Layer {
 			this._olLayer.setVisible(visible);
 		}
 		this.onVisibilityChange(visible);
+		this._onDisplayChange?.(this._visible, this._opacity);
 	}
 
 	/**
@@ -90,6 +94,7 @@ export abstract class Layer {
 		if (this._olLayer) {
 			this._olLayer.setOpacity(this._opacity);
 		}
+		this._onDisplayChange?.(this._visible, this._opacity);
 	}
 
 	/**

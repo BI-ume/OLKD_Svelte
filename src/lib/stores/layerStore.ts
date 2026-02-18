@@ -1,4 +1,4 @@
-import { writable, derived, get } from 'svelte/store';
+import { writable, derived, get, type Readable, type Writable } from 'svelte/store';
 import type { Layer } from '$lib/layers/Layer';
 import type { Group } from '$lib/layers/Group';
 import { mapStore } from './mapStore';
@@ -8,6 +8,94 @@ interface LayerState {
 	overlayGroups: Group[];
 	activeBackgroundLayer: Layer | null;
 	initialized: boolean;
+}
+
+/** Per-layer display state for granular reactivity */
+export interface LayerDisplayState {
+	visible: boolean;
+	opacity: number;
+}
+
+// Per-layer writable stores for O(1) reactivity
+const layerDisplayStores = new Map<string, Writable<LayerDisplayState>>();
+
+// Writable store tracking which layer names are currently visible
+// Updated via _onDisplayChange callback — triggers visibleOverlayLayers
+const _visibleLayerNames = writable<Set<string>>(new Set());
+
+/**
+ * Get a readable store for a single layer's display state (visible + opacity).
+ * Creates lazily if not yet wired.
+ */
+export function getLayerDisplay(name: string): Readable<LayerDisplayState> {
+	let store = layerDisplayStores.get(name);
+	if (!store) {
+		// Lazy creation with default hidden state
+		store = writable<LayerDisplayState>({ visible: false, opacity: 1 });
+		layerDisplayStores.set(name, store);
+	}
+	return { subscribe: store.subscribe };
+}
+
+/**
+ * Get a readable derived store for whether a group has any visible layers.
+ * Derives from the individual per-layer stores of the group's layers.
+ */
+export function getGroupDisplay(group: Group): Readable<boolean> {
+	const layerStores = group.layers.map((l) => getLayerDisplay(l.name));
+	return derived(layerStores, (states) => states.some((s) => s.visible));
+}
+
+/**
+ * Wire a layer's _onDisplayChange callback to push state into its per-layer store
+ * and update the visibleLayerNames set.
+ */
+function wireLayer(layer: Layer): void {
+	// Create or update the per-layer store with current state
+	let store = layerDisplayStores.get(layer.name);
+	if (!store) {
+		store = writable<LayerDisplayState>({ visible: layer.visible, opacity: layer.opacity });
+		layerDisplayStores.set(layer.name, store);
+	} else {
+		store.set({ visible: layer.visible, opacity: layer.opacity });
+	}
+
+	// Seed visibleLayerNames
+	if (layer.visible) {
+		_visibleLayerNames.update((names) => {
+			names.add(layer.name);
+			return new Set(names);
+		});
+	}
+
+	// Set the callback so future setVisible/setOpacity calls push into the per-layer store
+	layer._onDisplayChange = (visible: boolean, opacity: number) => {
+		const s = layerDisplayStores.get(layer.name);
+		if (s) {
+			s.set({ visible, opacity });
+		}
+		// Update the visible names set
+		_visibleLayerNames.update((names) => {
+			if (visible) {
+				names.add(layer.name);
+			} else {
+				names.delete(layer.name);
+			}
+			return new Set(names);
+		});
+	};
+}
+
+/**
+ * Unwire a layer: remove callback and clean up per-layer store.
+ */
+function unwireLayer(layer: Layer): void {
+	layer._onDisplayChange = undefined;
+	layerDisplayStores.delete(layer.name);
+	_visibleLayerNames.update((names) => {
+		names.delete(layer.name);
+		return new Set(names);
+	});
 }
 
 function createLayerStore() {
@@ -33,6 +121,10 @@ function createLayerStore() {
 			layersByName = new Map();
 			groupsByName = new Map();
 
+			// Clear previous per-layer stores
+			layerDisplayStores.clear();
+			_visibleLayerNames.set(new Set());
+
 			// Index background layers
 			backgrounds.forEach((layer) => {
 				layersByName.set(layer.name, layer);
@@ -52,6 +144,12 @@ function createLayerStore() {
 			// Ensure only one background is visible
 			backgrounds.forEach((layer) => {
 				layer.setVisible(layer === activeBackground);
+			});
+
+			// Wire all layers (after setVisible so callbacks capture final state)
+			backgrounds.forEach((layer) => wireLayer(layer));
+			overlays.forEach((group) => {
+				group.layers.forEach((layer) => wireLayer(layer));
 			});
 
 			set({
@@ -106,8 +204,7 @@ function createLayerStore() {
 			const layer = layersByName.get(name);
 			if (layer && !layer.isBackground) {
 				layer.setVisible(!layer.visible);
-				// Trigger reactivity
-				update((state) => ({ ...state }));
+				// No structural update() needed — per-layer callback handles reactivity
 			}
 		},
 
@@ -118,8 +215,7 @@ function createLayerStore() {
 			const layer = layersByName.get(name);
 			if (layer && !layer.isBackground) {
 				layer.setVisible(visible);
-				// Trigger reactivity
-				update((state) => ({ ...state }));
+				// No structural update() needed — per-layer callback handles reactivity
 			}
 		},
 
@@ -130,8 +226,7 @@ function createLayerStore() {
 			const layer = layersByName.get(name);
 			if (layer) {
 				layer.setOpacity(opacity);
-				// Trigger reactivity
-				update((state) => ({ ...state }));
+				// No structural update() needed — per-layer callback handles reactivity
 			}
 		},
 
@@ -143,8 +238,7 @@ function createLayerStore() {
 			if (group) {
 				const newVisibility = !group.visible;
 				group.setVisible(newVisibility);
-				// Trigger reactivity
-				update((state) => ({ ...state }));
+				// No structural update() needed — per-layer callbacks handle reactivity
 			}
 		},
 
@@ -155,8 +249,7 @@ function createLayerStore() {
 			const group = groupsByName.get(name);
 			if (group) {
 				group.setVisible(visible);
-				// Trigger reactivity
-				update((state) => ({ ...state }));
+				// No structural update() needed — per-layer callbacks handle reactivity
 			}
 		},
 
@@ -275,6 +368,7 @@ function createLayerStore() {
 			groupsByName.set(group.name, group);
 			group.layers.forEach((layer) => {
 				layersByName.set(layer.name, layer);
+				wireLayer(layer);
 			});
 
 			// Add OL layers to map with highest z-index (on top)
@@ -325,9 +419,10 @@ function createLayerStore() {
 				});
 			}
 
-			// Remove from lookup maps
+			// Unwire and remove from lookup maps
 			groupsByName.delete(name);
 			group.layers.forEach((layer) => {
+				unwireLayer(layer);
 				layersByName.delete(layer.name);
 			});
 
@@ -395,6 +490,13 @@ function createLayerStore() {
 		 * Reset the store
 		 */
 		reset: (): void => {
+			// Unwire all layers
+			for (const layer of layersByName.values()) {
+				layer._onDisplayChange = undefined;
+			}
+			layerDisplayStores.clear();
+			_visibleLayerNames.set(new Set());
+
 			layersByName = new Map();
 			groupsByName = new Map();
 
@@ -416,15 +518,22 @@ export const overlayGroups = derived(layerStore, ($layers) => $layers.overlayGro
 export const activeBackground = derived(layerStore, ($layers) => $layers.activeBackgroundLayer);
 export const layersInitialized = derived(layerStore, ($layers) => $layers.initialized);
 
+/** Readable store of currently-visible layer names. Reacts to per-layer visibility changes. */
+export const visibleLayerNames: Readable<Set<string>> = { subscribe: _visibleLayerNames.subscribe };
+
 // Derived store for visible overlay layers
-export const visibleOverlayLayers = derived(layerStore, ($layers) => {
-	const visible: Layer[] = [];
-	$layers.overlayGroups.forEach((group) => {
-		group.layers.forEach((layer) => {
-			if (layer.visible) {
-				visible.push(layer);
-			}
+// Reacts to both structural changes (layerStore) AND visibility changes (visibleLayerNames)
+export const visibleOverlayLayers = derived(
+	[layerStore, _visibleLayerNames],
+	([$layers, $names]) => {
+		const visible: Layer[] = [];
+		$layers.overlayGroups.forEach((group) => {
+			group.layers.forEach((layer) => {
+				if ($names.has(layer.name)) {
+					visible.push(layer);
+				}
+			});
 		});
-	});
-	return visible;
-});
+		return visible;
+	}
+);

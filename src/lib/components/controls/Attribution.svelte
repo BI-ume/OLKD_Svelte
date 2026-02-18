@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { layerStore } from '$lib/stores/layerStore';
-    import { fly } from 'svelte/transition';
+	import { layerStore, visibleLayerNames } from '$lib/stores/layerStore';
+	import { fly } from 'svelte/transition';
 
 	let isOpen = $state(false);
 
 	// Get unique attributions from all visible layers
+	// Reacts to both structural changes (layerStore) and visibility changes (visibleLayerNames)
 	let attributions = $derived.by(() => {
 		const state = $layerStore;
+		const names = $visibleLayerNames;
 		const seen = new Set<string>();
 		const result: string[] = [];
 
 		// Check background layers
 		state.backgroundLayers.forEach((layer) => {
-			if (layer.visible && layer.attribution && !seen.has(layer.attribution)) {
+			if (names.has(layer.name) && layer.attribution && !seen.has(layer.attribution)) {
 				seen.add(layer.attribution);
 				result.push(layer.attribution);
 			}
@@ -21,7 +23,7 @@
 		// Check overlay layers
 		state.overlayGroups.forEach((group) => {
 			group.layers.forEach((layer) => {
-				if (layer.visible && layer.attribution && !seen.has(layer.attribution)) {
+				if (names.has(layer.name) && layer.attribution && !seen.has(layer.attribution)) {
 					seen.add(layer.attribution);
 					result.push(layer.attribution);
 				}

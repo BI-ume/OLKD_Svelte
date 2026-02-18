@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Group } from '$lib/layers/Group';
 	import { layerStore, metadataPopupStore } from '$lib/stores';
+	import { getGroupDisplay } from '$lib/stores/layerStore';
 	import LayerItem from './LayerItem.svelte';
 
 	interface Props {
@@ -44,11 +45,9 @@
 		closeMenu();
 	}
 
-	// Subscribe to layerStore to trigger reactivity when layer state changes
-	let hasVisibleLayers = $derived.by(() => {
-		void $layerStore; // Create dependency on store
-		return group.layers.some((l) => l.visible);
-	});
+	// Subscribe to per-group derived store for O(1) reactivity
+	const groupDisplayStore = getGroupDisplay(group);
+	let hasVisibleLayers = $derived($groupDisplayStore);
 
 	let hasMetadata = $derived(!!group.metadataUrl);
 	let hasMenuItems = $derived(hasMetadata || !!onRemove);

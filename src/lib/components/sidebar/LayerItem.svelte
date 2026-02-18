@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Layer } from '$lib/layers/Layer';
 	import { layerStore, metadataPopupStore } from '$lib/stores';
+	import { getLayerDisplay } from '$lib/stores/layerStore';
 
 	interface Props {
 		layer: Layer;
@@ -54,15 +55,10 @@
 		closeMenu();
 	}
 
-	// Subscribe to layerStore to trigger reactivity when layer state changes
-	let visible = $derived.by(() => {
-		void $layerStore; // Create dependency on store
-		return layer.visible;
-	});
-	let opacity = $derived.by(() => {
-		void $layerStore; // Create dependency on store
-		return Math.round(layer.opacity * 100);
-	});
+	// Subscribe to per-layer store for O(1) reactivity
+	const displayStore = getLayerDisplay(layer.name);
+	let visible = $derived($displayStore.visible);
+	let opacity = $derived(Math.round($displayStore.opacity * 100));
 
 	let hasMetadata = $derived(!!layer.metadataUrl);
 	let hasMenuItems = $derived(hasMetadata || showOpacity || !!onRemove);

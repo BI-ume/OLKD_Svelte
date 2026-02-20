@@ -218,6 +218,7 @@
 		flex: 1;
 		line-height: 1.4;
 		padding-top: 2px;
+		overflow-wrap: anywhere;
 	}
 
 	.layer-title.visible {

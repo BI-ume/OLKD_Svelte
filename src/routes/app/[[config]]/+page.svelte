@@ -4,6 +4,7 @@
 	import { configStore, layerStore, componentsConfig, metadataPopupStore, metadataPopupIsOpen, metadataPopupUrl, metadataPopupTitle } from '$lib/stores';
 	import { sidebarStore, sidebarIsOpen } from '$lib/stores/sidebarStore';
 	import { initializeLayers } from '$lib/layers';
+	import { applyUrlLayerState } from '$lib/utils/urlParams';
 	import { Map } from '$lib/components/map';
 	import { Sidebar } from '$lib/components/sidebar';
 	import {
@@ -33,6 +34,7 @@
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let initialized = $state(false);
+	let urlMapState = $state<{ zoom: number; x: number; y: number } | null>(null);
 
 	onMount(async () => {
 		try {
@@ -53,6 +55,11 @@
 				// Initialize layers from configuration
 				const { backgrounds, overlays } = initializeLayers(state.layers);
 				layerStore.initialize(backgrounds, overlays);
+
+				// Apply layer state from URL before components render
+				// (map position is deferred until the OL map exists)
+				urlMapState = applyUrlLayerState();
+
 				initialized = true;
 			}
 		} catch (e) {
@@ -114,7 +121,7 @@
 					{/if}
 				</button>
 			{/if}
-			<UrlSync />
+			<UrlSync initialMapState={urlMapState} />
 			<ContextMenu />
 			{#if showSearch && !showSidebar}
 				<SearchBox sidebarOpen={$sidebarIsOpen} />

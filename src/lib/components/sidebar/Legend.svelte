@@ -53,10 +53,15 @@
 	}
 
 	function getLegendType(layer: Layer): 'graphic' | 'link' | 'text' | 'none' {
+		// No legend configured at all — don't show
+		if (!layer.legend) {
+			return 'none';
+		}
+
 		const config = getLegendConfig(layer);
 
 		if (!config) {
-			// Default: try GetLegendGraphic for WMS layers
+			// legend: true — try GetLegendGraphic for WMS layers
 			const url = layer.getLegendGraphicUrl();
 			return url ? 'graphic' : 'none';
 		}

@@ -166,34 +166,47 @@
 		params.push(`map=${mapValue}`);
 
 		// Handle layer params based on mode
-		if (urlSyncMode === 'map' || urlSyncMode === 'full') {
-			// Build layers parameter with opacity
+		if (urlSyncMode === 'map') {
+			// map mode: only visible overlays, no prefix
 			const layerEntries: string[] = [];
 
-			// Add active background (use get() for one-time read)
 			const currentBg = get(activeBackground);
 			if (currentBg) {
 				layerEntries.push(currentBg.name);
 			}
 
-			// Add visible overlays with opacity (in group order)
-			const overlays = get(visibleOverlayLayers);
-			overlays.forEach((layer) => {
+			get(visibleOverlayLayers).forEach((layer) => {
 				layerEntries.push(formatLayerEntry(layer));
 			});
 
 			if (layerEntries.length > 0) {
 				params.push(`layers=${layerEntries.join(',')}`);
 			}
-		}
+		} else if (urlSyncMode === 'full') {
+			// full mode: compact format — layers=bg,groupA(1:80,0:50,1),groupB(0,1:55)
+			// Each group's layers are encoded by index as "1" (visible) or "0" (hidden),
+			// with an optional ":opacity" suffix when opacity is not 100%.
+			const layerEntries: string[] = [];
 
-		// Add groups param for 'full' mode
-		if (urlSyncMode === 'full') {
-			const groups = get(overlayGroups);
-			if (groups.length > 0) {
-				const groupNames = groups.map((g) => g.name);
-				params.push(`groups=${groupNames.join(',')}`);
+			const currentBg = get(activeBackground);
+			if (currentBg) {
+				layerEntries.push(currentBg.name);
 			}
+
+			const groups = get(overlayGroups);
+			groups.forEach((group) => {
+				const states = group.layers.map((layer) => {
+					const vis = layer.visible ? '1' : '0';
+					const opPct = Math.round(layer.opacity * 100);
+					return opPct === 100 ? vis : `${vis}:${opPct}`;
+				});
+				layerEntries.push(`${group.name}(${states.join(',')})`);
+			});
+
+			if (layerEntries.length > 0) {
+				params.push(`layers=${layerEntries.join(',')}`);
+			}
+			// No separate groups param — group names and order are embedded in layers
 		}
 
 		// Preserve other existing params (like config)

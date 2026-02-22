@@ -4,7 +4,7 @@
 	import { configStore, layerStore, componentsConfig, metadataPopupStore, metadataPopupIsOpen, metadataPopupUrl, metadataPopupTitle } from '$lib/stores';
 	import { sidebarStore, sidebarIsOpen } from '$lib/stores/sidebarStore';
 	import { initializeLayers } from '$lib/layers';
-	import { applyUrlLayerState } from '$lib/utils/urlParams';
+	import { applyUrlLayerState, parseUrlGroups } from '$lib/utils/urlParams';
 	import { Map } from '$lib/components/map';
 	import { Sidebar } from '$lib/components/sidebar';
 	import {
@@ -54,7 +54,15 @@
 			if (state.layers) {
 				// Initialize layers from configuration
 				const { backgrounds, overlays } = initializeLayers(state.layers);
-				layerStore.initialize(backgrounds, overlays);
+
+				// In 'full' URL mode, only load the groups listed in the URL.
+				// This way config groups absent from the URL are never registered.
+				const urlGroupFilter = parseUrlGroups();
+				const filteredOverlays = urlGroupFilter
+					? overlays.filter((g) => urlGroupFilter.includes(g.name))
+					: overlays;
+
+				layerStore.initialize(backgrounds, filteredOverlays);
 
 				// Apply layer state from URL before components render
 				// (map position is deferred until the OL map exists)

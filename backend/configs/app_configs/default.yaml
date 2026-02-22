@@ -65,10 +65,12 @@ components:
     print: true
     draw: true
 
-# URL sync configuration
-# mode: 'xyz' = position/zoom only | 'map' = + visible layers with opacity | 'full' = + all groups in order
+# URL sync configuration. modes: 
+# 'xyz' = position/zoom only
+# 'map' = 'xyz' + visible layers with opacity
+# 'full' = 'xyz' + all overlay groups with per-layer visibility and opacity, encoded compactly by index
 urlSync:
-    mode: 'map'
+    mode: 'full'
 
 searchConfig:
     - name: adress_search

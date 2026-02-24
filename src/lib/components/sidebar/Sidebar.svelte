@@ -159,6 +159,35 @@
 		transform: translateX(0);
 	}
 
+	/* For small viewport height, the whole sidebar becomes scrollable */
+	@media screen and (height < 470px) {
+
+		.sidebar-wrapper.open {
+			pointer-events: auto;
+			overflow-y: scroll;
+			padding-right: 0;
+			width: calc(var(--sidebar-width) - 10px);
+		}
+
+		/* Custom scrollbar — matches .scrollable */
+		.sidebar-wrapper::-webkit-scrollbar {
+			width: 8px;
+		}
+
+		.sidebar-wrapper::-webkit-scrollbar-track {
+			background: #f0f0f0;
+		}
+
+		.sidebar-wrapper::-webkit-scrollbar-thumb {
+			background: #ccc;
+			border-radius: 4px;
+		}
+
+		.sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+			background: #aaa;
+		}
+	}
+
 	/* Cards */
 	.sidebar-card {
 		background: white;
@@ -227,7 +256,7 @@
 	.body-area {
 		flex: 1;
 		position: relative;
-		min-height: 0;
+		min-height: 350px;
 		overflow: hidden;
 		z-index: 1;
 	}
@@ -251,7 +280,7 @@
 	/* Content card: sizes to content, scrolls when it reaches the footer */
 	.content-card {
 		flex: 0 1 auto;
-		min-height: 0;
+		min-height: 200px;
 		display: flex;
 		flex-direction: column;
 	}

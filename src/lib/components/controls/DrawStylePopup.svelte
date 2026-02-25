@@ -167,6 +167,7 @@
 				<!-- svelte-ignore a11y_autofocus -->
 				<input id="draw-text-input" type="text" class="input-sm" value={s.text}
 					oninput={(e) => applyStyle({ text: e.currentTarget.value })}
+					onfocus={(e) => e.currentTarget.select()}
 					placeholder="Text eingeben..."
 					autofocus />
 			</div>

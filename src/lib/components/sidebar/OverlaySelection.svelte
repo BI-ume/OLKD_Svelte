@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { layerStore, overlayGroups } from '$lib/stores/layerStore';
-	import { sidebarStore } from '$lib/stores/sidebarStore';
+	import { layerStore, overlayGroups, mapStore } from '$lib/stores';
+	import { sidebarStore, SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 	import { configStore } from '$lib/stores/configStore';
 	import { drawStore, drawFeatureCount, drawLayerVisible } from '$lib/stores/drawStore';
+	import { isEmpty } from 'ol/extent';
+	import type { Extent } from 'ol/extent';
 	import LayerGroup from './LayerGroup.svelte';
 	import type { Group } from '$lib/layers/Group';
 
@@ -10,6 +12,35 @@
 	let dropTargetIndex = $state<number | null>(null);
 	let dropPosition = $state<'above' | 'below' | null>(null);
 	let mousedownTarget: HTMLElement | null = null;
+
+	let showDrawMenu = $state(false);
+	let drawMenuContainer: HTMLDivElement;
+
+	function toggleDrawMenu() {
+		showDrawMenu = !showDrawMenu;
+	}
+
+	function zoomToDrawing() {
+		const source = drawStore.getSource();
+		if (source) {
+			const extent = source.getExtent() as Extent;
+			if (!isEmpty(extent)) {
+				mapStore.zoomToExtent(extent, [50, 50, 50, SIDEBAR_WIDTH + 50]);
+			}
+		}
+		showDrawMenu = false;
+	}
+
+	function clearDrawing() {
+		drawStore.clearAll();
+		showDrawMenu = false;
+	}
+
+	function handleWindowClick(e: MouseEvent) {
+		if (showDrawMenu && drawMenuContainer && !drawMenuContainer.contains(e.target as Node)) {
+			showDrawMenu = false;
+		}
+	}
 
 	let showCatalogButton = $derived($configStore.app?.components?.catalog !== false);
 
@@ -76,6 +107,8 @@
 	}
 </script>
 
+<svelte:window onclick={handleWindowClick} />
+
 <section class="overlay-section">
 	<h3 class="section-title">Themen | Inhalte</h3>
 
@@ -123,6 +156,41 @@
 				</span>
 			</button>
 			<span class="draw-layer-title" class:visible={$drawLayerVisible}>Zeichnung</span>
+
+			<div class="menu-container" bind:this={drawMenuContainer}>
+				<button
+					class="menu-btn"
+					class:active={showDrawMenu}
+					onclick={toggleDrawMenu}
+					title="Mehr Optionen"
+					aria-label="Mehr Optionen"
+					aria-expanded={showDrawMenu}
+				>
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+					</svg>
+				</button>
+
+				{#if showDrawMenu}
+					<div class="menu-dropdown">
+						<button class="menu-item" onclick={zoomToDrawing}>
+							<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="15 3 21 3 21 9"></polyline>
+								<polyline points="9 21 3 21 3 15"></polyline>
+								<line x1="21" y1="3" x2="14" y2="10"></line>
+								<line x1="3" y1="21" x2="10" y2="14"></line>
+							</svg>
+							<span>Auf Layer zoomen</span>
+						</button>
+						<button class="menu-item remove" onclick={clearDrawing}>
+							<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+								<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+							</svg>
+							<span>Entfernen</span>
+						</button>
+					</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 
@@ -233,6 +301,77 @@
 		font-size: 13px;
 		color: #666;
 		user-select: none;
+		flex: 1;
+	}
+
+	.menu-container {
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.menu-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #999;
+		border-radius: 4px;
+		transition: background-color 0.15s, color 0.15s;
+	}
+
+	.menu-btn:hover {
+		background-color: #f0f0f0;
+		color: #666;
+	}
+
+	.menu-btn.active {
+		background-color: #e8f4fc;
+		color: #2196f3;
+	}
+
+	.menu-dropdown {
+		position: absolute;
+		top: 100%;
+		right: 0;
+		margin-top: 4px;
+		background: white;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		min-width: 160px;
+		z-index: 100;
+		overflow: hidden;
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		padding: 8px 12px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-size: 13px;
+		color: #333;
+		text-align: left;
+		transition: background-color 0.1s;
+	}
+
+	.menu-item:hover {
+		background-color: #f5f5f5;
+	}
+
+	.menu-item.remove:hover {
+		background-color: #fee;
+		color: #d32f2f;
+	}
+
+	.menu-item svg {
+		flex-shrink: 0;
 	}
 
 	.draw-layer-title.visible {

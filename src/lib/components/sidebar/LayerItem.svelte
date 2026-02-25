@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { Layer } from '$lib/layers/Layer';
-	import { layerStore, metadataPopupStore } from '$lib/stores';
+	import { layerStore, metadataPopupStore, mapStore } from '$lib/stores';
 	import { getLayerDisplay } from '$lib/stores/layerStore';
+	import { SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
 
 	interface Props {
 		layer: Layer;
@@ -41,6 +42,12 @@
 		showSlider = !showSlider;
 	}
 
+	function handleZoomToExtent() {
+		const extent = layer.getExtent();
+		if (extent) mapStore.zoomToExtent(extent, [50, 50, 50, SIDEBAR_WIDTH + 50]);
+		closeMenu();
+	}
+
 	function handleInfo() {
 		if (layer.metadataUrl) {
 			metadataPopupStore.open(layer.metadataUrl, layer.title);
@@ -61,7 +68,7 @@
 	let opacity = $derived(Math.round($displayStore.opacity * 100));
 
 	let hasMetadata = $derived(!!layer.metadataUrl);
-	let hasMenuItems = $derived(hasMetadata || showOpacity || !!onRemove);
+	let hasMenuItems = $derived(hasMetadata || showOpacity || !!onRemove || layer.supportsZoomToExtent);
 
 	let menuContainer: HTMLDivElement;
 
@@ -117,6 +124,18 @@
 
 				{#if showMenu}
 					<div class="menu-dropdown">
+						{#if layer.supportsZoomToExtent}
+							<button class="menu-item" onclick={handleZoomToExtent}>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+									<polyline points="15 3 21 3 21 9"></polyline>
+									<polyline points="9 21 3 21 3 15"></polyline>
+									<line x1="21" y1="3" x2="14" y2="10"></line>
+									<line x1="3" y1="21" x2="10" y2="14"></line>
+								</svg>
+								<span>Auf Layer zoomen</span>
+							</button>
+						{/if}
+
 						{#if hasMetadata}
 							<button class="menu-item" onclick={handleInfo}>
 								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">

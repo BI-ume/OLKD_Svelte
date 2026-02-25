@@ -1,4 +1,5 @@
 import type BaseLayer from 'ol/layer/Base';
+import type { Extent } from 'ol/extent';
 import type { LayerConfig, OlLayerConfig, LegendConfig, FeatureInfoConfig } from './types';
 
 /**
@@ -113,6 +114,22 @@ export abstract class Layer {
 			this._olLayer.dispose();
 			this._olLayer = null;
 		}
+	}
+
+	/**
+	 * Whether this layer type supports zooming to its data extent.
+	 * Override in subclasses that have a computable extent.
+	 */
+	get supportsZoomToExtent(): boolean {
+		return false;
+	}
+
+	/**
+	 * Get the data extent of this layer, or null if not available.
+	 * Override in subclasses that have a computable extent.
+	 */
+	getExtent(): Extent | null {
+		return this._olLayer?.getExtent() ?? null;
 	}
 
 	/**

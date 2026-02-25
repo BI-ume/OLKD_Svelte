@@ -2,6 +2,8 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { get as getProjection } from 'ol/proj';
+import { isEmpty } from 'ol/extent';
+import type { Extent } from 'ol/extent';
 import type { LayerConfig, GeoJSONSourceConfig } from './types';
 import { Layer } from './Layer';
 
@@ -62,5 +64,17 @@ export class StaticGeoJSON extends Layer {
 		if (source) {
 			source.refresh();
 		}
+	}
+
+	override get supportsZoomToExtent(): boolean {
+		return true;
+	}
+
+	override getExtent(): Extent | null {
+		const source = this.getSource();
+		if (!source) return null;
+		const extent = source.getExtent();
+		if (!extent || isEmpty(extent)) return null;
+		return extent;
 	}
 }

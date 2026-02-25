@@ -31,6 +31,9 @@
 		if (!showMenu) {
 			showSlider = false;
 		}
+		if (showMenu && showOpacity && opacity < 100) {
+			showSlider = true;
+		}
 	}
 
 	function closeMenu() {
@@ -69,6 +72,11 @@
 
 	let hasMetadata = $derived(!!layer.metadataUrl);
 	let hasMenuItems = $derived(hasMetadata || showOpacity || !!onRemove || layer.supportsZoomToExtent);
+
+	// Opacity indicator icon: visible as long as opacity<100, OR while slider is still open at 100
+	let opacityIndicatorVisible = $derived(opacity < 100 || showSlider);
+	// Icon colour: grey when slider is open and dragged to 100%, blue otherwise
+	let opacityIconGrey = $derived(showSlider && opacity >= 100);
 
 	let menuContainer: HTMLDivElement;
 
@@ -117,6 +125,20 @@
 					aria-label="Mehr Optionen"
 					aria-expanded={showMenu}
 				>
+					{#if showOpacity && opacityIndicatorVisible}
+						<svg
+							viewBox="0 0 24 24"
+							width="16"
+							height="16"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							style="color: {opacityIconGrey ? '#999' : '#2196f3'}"
+						>
+							<circle cx="12" cy="12" r="10" opacity="0.3"></circle>
+							<path d="M12 2a10 10 0 0 0 0 20" fill="currentColor" stroke="none"></path>
+						</svg>
+					{/if}
 					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
 						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
 					</svg>
@@ -149,9 +171,9 @@
 							<button class="menu-item" class:active={showSlider} onclick={toggleSlider}>
 								<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
 									<circle cx="12" cy="12" r="10" opacity="0.3"></circle>
-									<path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" stroke="none"></path>
+									<path d="M12 2a10 10 0 0 0 0 20" fill="currentColor" stroke="none"></path>
 								</svg>
-								<span>Transparenz</span>
+								<span>Deckkraft</span>
 								<span class="opacity-value">{opacity}%</span>
 							</button>
 
@@ -258,6 +280,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		gap: 2px;
 		color: #999;
 		border-radius: 4px;
 		transition: background-color 0.15s, color 0.15s;

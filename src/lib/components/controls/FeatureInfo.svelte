@@ -5,6 +5,7 @@
 	import { layerStore } from '$lib/stores/layerStore';
 	import { sidebarShowDraw, sidebarShowPrint } from "$lib/stores/sidebarStore";
 	import { measureActive } from '$lib/stores/measureStore';
+	import { drawStore } from '$lib/stores/drawStore';
 	import { catalogStore } from '$lib/stores/catalogStore';
 	import { configStore } from '$lib/stores/configStore';
 	import { TiledWMS } from '$lib/layers/TiledWMS';
@@ -116,6 +117,10 @@
 		if (get(measureActive)) return;
 
 		if (!map) return;
+
+		// Don't fire when clicking on a draw feature
+		const drawLayer = drawStore.getLayer();
+		if (drawLayer && map.hasFeatureAtPixel(evt.pixel, { layerFilter: (l) => l === drawLayer })) return;
 		const view = map.getView();
 		const coordinate = evt.coordinate;
 		const resolution = view.getResolution();

@@ -17,27 +17,36 @@
 	let atMinZoom = $derived($mapZoom <= minZoom);
 	let atMaxZoom = $derived($mapZoom >= maxZoom);
 
-	/** Get the visual center of the map (offset for sidebar) */
-	function getVisualCenter(): number[] | undefined {
-		if (!$sidebarIsOpen) return undefined;
-		const map = mapStore.getMap();
+	/** Animate zoom while keeping the visual center (sidebar-adjusted) fixed on screen */
+	function animateZoom(newZoom: number) {
 		const view = mapStore.getView();
-		if (!map || !view) return undefined;
-		const center = view.getCenter();
-		const res = view.getResolution();
-		if (!center || !res) return undefined;
-		return [center[0] + (SIDEBAR_WIDTH / 2) * res, center[1]];
+		if (!view) return;
+
+		if ($sidebarIsOpen) {
+			const center = view.getCenter();
+			const currentRes = view.getResolution();
+			if (center && currentRes) {
+				// Geographic coordinate at the visual center of the visible map area
+				const vcX = center[0] + (SIDEBAR_WIDTH / 2) * currentRes;
+				// New view center that keeps vcX at the visual center pixel after zoom
+				const newRes = view.getResolutionForZoom(newZoom);
+				view.animate({
+					center: [vcX - (SIDEBAR_WIDTH / 2) * newRes, center[1]],
+					zoom: newZoom,
+					duration: 250
+				});
+				return;
+			}
+		}
+
+		view.animate({ zoom: newZoom, duration: 250 });
 	}
 
 	function zoomIn() {
 		const view = mapStore.getView();
 		if (view) {
 			const currentZoom = view.getZoom() ?? 0;
-			view.animate({
-				center: getVisualCenter(),
-				zoom: Math.min(currentZoom + 1, maxZoom),
-				duration: 250
-			});
+			animateZoom(Math.min(currentZoom + 1, maxZoom));
 		}
 	}
 
@@ -45,11 +54,7 @@
 		const view = mapStore.getView();
 		if (view) {
 			const currentZoom = view.getZoom() ?? 0;
-			view.animate({
-				center: getVisualCenter(),
-				zoom: Math.max(currentZoom - 1, minZoom),
-				duration: 250
-			});
+			animateZoom(Math.max(currentZoom - 1, minZoom));
 		}
 	}
 </script>

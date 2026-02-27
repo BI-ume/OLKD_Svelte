@@ -480,7 +480,14 @@
 
 			{#if measureResult}
 				<div class="measure-result">
-					<strong>Ergebnis:</strong> {@html measureResult}
+					<strong>
+						{#if activeMode === 'area'}
+							Fläche: 
+						{:else if activeMode === 'line'}
+							Gesamtstrecke
+						{/if}
+					</strong> 
+					{@html measureResult}
 				</div>
 			{/if}
 		</div>

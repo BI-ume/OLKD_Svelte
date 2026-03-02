@@ -2,11 +2,6 @@
 	import { mapStore } from '$lib/stores/mapStore';
 	import { transform } from 'ol/proj';
 
-	interface Props {
-		sidebarOpen?: boolean;
-	}
-
-	let { sidebarOpen = false }: Props = $props();
 
 	let isOpen = $state(false);
 
@@ -99,7 +94,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="goto-control" class:sidebar-open={sidebarOpen}>
+<div class="goto-control">
 	<button
 		class="goto-btn"
 		class:active={isOpen}
@@ -136,15 +131,7 @@
 
 <style>
 	.goto-control {
-		position: absolute;
-		top: 214px;
-		left: 10px;
-		z-index: 100;
-		transition: left 0.3s ease;
-	}
-
-	.goto-control.sidebar-open {
-		left: var(--sidebar-width);
+		position: relative;
 	}
 
 	.goto-btn {

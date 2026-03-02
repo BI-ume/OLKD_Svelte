@@ -16,11 +16,6 @@
 	import Feature from 'ol/Feature';
 	import { Z_INDEX } from '$lib/constants';
 
-	interface Props {
-		sidebarOpen?: boolean;
-	}
-
-	let { sidebarOpen = false }: Props = $props();
 
 	type MeasureMode = 'none' | 'point' | 'line' | 'area';
 
@@ -399,7 +394,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="measure-control" class:sidebar-open={sidebarOpen}>
+<div class="measure-control">
 	<button
 		class="measure-btn"
 		class:active={isOpen || activeMode !== 'none'}
@@ -496,15 +491,7 @@
 
 <style>
 	.measure-control {
-		position: absolute;
-		top: 254px;
-		left: 10px;
-		z-index: 100;
-		transition: left 0.3s ease;
-	}
-
-	.measure-control.sidebar-open {
-		left: var(--sidebar-width);
+		position: relative;
 	}
 
 	.measure-btn {

@@ -59,7 +59,7 @@
 	}
 </script>
 
-<div class="zoom-controls" class:sidebar-open={sidebarOpen}>
+<div class="zoom-controls">
 	<button
 		class="zoom-btn zoom-in"
 		onclick={zoomIn}
@@ -87,18 +87,9 @@
 
 <style>
 	.zoom-controls {
-		position: absolute;
-		top: 56px;
-		left: 10px;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		z-index: 100;
-		transition: left 0.3s ease;
-	}
-
-	.zoom-controls.sidebar-open {
-		left: var(--sidebar-width);
 	}
 
 	.zoom-btn {

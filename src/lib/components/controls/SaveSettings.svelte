@@ -7,11 +7,6 @@
 	import type { GroupConfig } from '$lib/layers/types';
 	import { get } from 'svelte/store';
 
-	interface Props {
-		sidebarOpen?: boolean;
-	}
-
-	let { sidebarOpen = false }: Props = $props();
 
 	interface SavedProfile {
 		name: string;
@@ -288,7 +283,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="settings-control" class:sidebar-open={sidebarOpen}>
+<div class="settings-control">
 	<button
 		class="settings-btn"
 		onclick={openDialog}
@@ -439,15 +434,7 @@
 
 <style>
 	.settings-control {
-		position: absolute;
-		top: 294px;
-		left: 10px;
-		z-index: 100;
-		transition: left 0.3s ease;
-	}
-
-	.settings-control.sidebar-open {
-		left: var(--sidebar-width);
+		position: relative;
 	}
 
 	.settings-btn {

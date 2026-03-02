@@ -33,7 +33,6 @@
 
 <button
 	class="home-btn"
-	class:sidebar-open={sidebarOpen}
 	onclick={zoomHome}
 	title="Zur Übersicht"
 	aria-label="Zur Übersicht zoomen"
@@ -46,9 +45,6 @@
 
 <style>
 	.home-btn {
-		position: absolute;
-		top: 134px;
-		left: 10px;
 		width: 36px;
 		height: 36px;
 		display: flex;
@@ -59,13 +55,8 @@
 		border-radius: 4px;
 		cursor: pointer;
 		color: #333;
-		transition: background-color 0.15s, left 0.3s ease;
+		transition: background-color 0.15s;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-		z-index: 100;
-	}
-
-	.home-btn.sidebar-open {
-		left: var(--sidebar-width);
 	}
 
 	.home-btn:hover {

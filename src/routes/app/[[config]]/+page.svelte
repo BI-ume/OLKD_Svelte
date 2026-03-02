@@ -134,24 +134,26 @@
 			{#if showSearch && !showSidebar}
 				<SearchBox sidebarOpen={$sidebarIsOpen} />
 			{/if}
-			{#if showZoomControls}
-				<ZoomControls sidebarOpen={$sidebarIsOpen} />
-			{/if}
-			{#if showHomeButton}
-				<HomeButton sidebarOpen={$sidebarIsOpen} />
-			{/if}
-			{#if showGeolocation}
-				<Geolocation sidebarOpen={$sidebarIsOpen} />
-			{/if}
-			{#if showGotoButton}
-				<GotoButton sidebarOpen={$sidebarIsOpen} />
-			{/if}
-			{#if showMeasure}
-				<MeasureButton sidebarOpen={$sidebarIsOpen} />
-			{/if}
-			{#if showSaveSettings}
-				<SaveSettings sidebarOpen={$sidebarIsOpen} />
-			{/if}
+			<div class="left-controls" class:sidebar-open={$sidebarIsOpen}>
+				{#if showZoomControls}
+					<ZoomControls sidebarOpen={$sidebarIsOpen} />
+				{/if}
+				{#if showHomeButton}
+					<HomeButton sidebarOpen={$sidebarIsOpen} />
+				{/if}
+				{#if showGeolocation}
+					<Geolocation sidebarOpen={$sidebarIsOpen} />
+				{/if}
+				{#if showGotoButton}
+					<GotoButton />
+				{/if}
+				{#if showMeasure}
+					<MeasureButton />
+				{/if}
+				{#if showSaveSettings}
+					<SaveSettings />
+				{/if}
+			</div>
 			{#if showScaleLine}
 				<ScaleLine sidebarOpen={$sidebarIsOpen} />
 			{/if}
@@ -196,6 +198,21 @@
 		position: absolute;
 		inset: 0;
 		overflow: hidden;
+	}
+
+	.left-controls {
+		position: absolute;
+		top: 56px;
+		left: 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		z-index: 100;
+		transition: left 0.3s ease;
+	}
+
+	.left-controls.sidebar-open {
+		left: var(--sidebar-width);
 	}
 
 	.sidebar-toggle {

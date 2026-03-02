@@ -231,7 +231,7 @@
 	});
 </script>
 
-<div class="geolocation" class:sidebar-open={sidebarOpen}>
+<div class="geolocation">
 	<button
 		class="geolocation-btn"
 		class:locating={isLocating}
@@ -256,15 +256,7 @@
 
 <style>
 	.geolocation {
-		position: absolute;
-		top: 174px;
-		left: 10px;
-		z-index: 100;
-		transition: left 0.3s ease;
-	}
-
-	.geolocation.sidebar-open {
-		left: var(--sidebar-width);
+		position: relative;
 	}
 
 	.geolocation-btn {

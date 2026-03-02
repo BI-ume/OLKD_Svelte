@@ -105,7 +105,6 @@ geolocationConfig:
 
 printConfig:
     chooseCells: True
-    pageResize: True
     chooseStreetIndex: True
     conditionsOfUse: True
     downloadPrefix: bielefeldKarte-
@@ -116,51 +115,55 @@ printConfig:
         - 5000
         - 10000
         - 15000
-    availablePageLayouts:
-        "a0-portrait":
-            label: A0
-            icon: "glyphicon-resize-vertical"
-            mapElementSize: [2344, 3310]
-        "a0-landscape":
-            label: A0
-            icon: "glyphicon-resize-horizontal"
-            mapElementSize: [3330, 2324]
-        "a1-portrait":
-            label: A1
-            icon: "glyphicon-resize-vertical"
-            mapElementSize: [1644, 2324]
-        "a1-landscape":
-            label: A1
-            icon: "glyphicon-resize-horizontal"
-            mapElementSize: [2344, 1624]
-        "a2-portrait":
-            label: A2
-            icon: "glyphicon-resize-vertical"
-            mapElementSize: [1151, 1624]
-        "a2-landscape":
-            label: A2
-            icon: "glyphicon-resize-horizontal"
-            mapElementSize: [1644, 1131]
-        "a3-portrait":
-            label: A3
-            icon: "glyphicon-resize-vertical"
-            mapElementSize: [802, 1131]
-        "a3-landscape":
-            label: A3
-            icon: "glyphicon-resize-horizontal"
-            mapElementSize: [1151, 782]
+    pageLayoutDefs:
+        "a5-portrait":
+            label: A5
+            mapElementSize: [393, 554]
+        "a5-landscape":
+            label: A5
+            mapElementSize: [554, 373]
         "a4-portrait":
             label: A4
-            icon: "glyphicon-resize-vertical"
             mapElementSize: [555, 782]
         "a4-landscape":
             label: A4
-            icon: "glyphicon-resize-horizontal"
             mapElementSize: [802, 535]
-    pageLayouts:
-        - "a3-portrait"
-        - "a3-landscape"
+        "a3-portrait":
+            label: A3
+            mapElementSize: [802, 1131]
+        "a3-landscape":
+            label: A3
+            mapElementSize: [1151, 782]
+        "a2-portrait":
+            label: A2
+            mapElementSize: [1151, 1624]
+        "a2-landscape":
+            label: A2
+            mapElementSize: [1644, 1131]
+        "a1-portrait":
+            label: A1
+            mapElementSize: [1644, 2324]
+        "a1-landscape":
+            label: A1
+            mapElementSize: [2344, 1624]
+        "a0-portrait":
+            label: A0
+            mapElementSize: [2344, 3310]
+        "a0-landscape":
+            label: A0
+            mapElementSize: [3330, 2324]
+    enabledPageLayouts:
+        - "a5-portrait"
+        - "a5-landscape"
         - "a4-portrait"
         - "a4-landscape"
+        - "a3-portrait"
+        - "a3-landscape"
+        - "a2-portrait"
+        - "a2-landscape"
+        - "a1-portrait"
+        - "a1-landscape"
+        - "a0-portrait"
+        - "a0-landscape"
     minPageSize: 419
     maxPageSize: 3371

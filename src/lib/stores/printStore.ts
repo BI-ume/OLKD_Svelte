@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 
-export type PageLayout = 'a4_portrait' | 'a4_landscape' | 'a3_portrait' | 'a3_landscape' | 'custom';
+export type PageLayout = string; // e.g. 'a4-portrait', 'a3-landscape', 'custom'
 export type OutputFormat = 'pdf' | 'png';
 export type PrintStatus = 'idle' | 'preparing' | 'processing' | 'ready' | 'error';
 
@@ -30,18 +30,26 @@ interface PrintState {
 	error: string | null;
 }
 
-// Page sizes in mm
-export const PAGE_SIZES: Record<Exclude<PageLayout, 'custom'>, PageSize> = {
-	a4_portrait: { width: 210, height: 297 },
-	a4_landscape: { width: 297, height: 210 },
-	a3_portrait: { width: 297, height: 420 },
-	a3_landscape: { width: 420, height: 297 }
+// Standard ISO paper sizes in mm (all A0–A5, portrait and landscape)
+export const PAGE_SIZES: Record<string, PageSize> = {
+	'a5-portrait':  { width: 148, height: 210 },
+	'a5-landscape': { width: 210, height: 148 },
+	'a4-portrait':  { width: 210, height: 297 },
+	'a4-landscape': { width: 297, height: 210 },
+	'a3-portrait':  { width: 297, height: 420 },
+	'a3-landscape': { width: 420, height: 297 },
+	'a2-portrait':  { width: 420, height: 594 },
+	'a2-landscape': { width: 594, height: 420 },
+	'a1-portrait':  { width: 594, height: 841 },
+	'a1-landscape': { width: 841, height: 594 },
+	'a0-portrait':  { width: 841, height: 1189 },
+	'a0-landscape': { width: 1189, height: 841 },
 };
 
 // Default settings
 const DEFAULT_SETTINGS: PrintSettings = {
-	layout: 'a4_portrait',
-	pageSize: { ...PAGE_SIZES.a4_portrait },
+	layout: 'a4-portrait',
+	pageSize: { ...PAGE_SIZES['a4-portrait'] },
 	scale: 2500,
 	outputFormat: 'pdf'
 };
@@ -103,7 +111,7 @@ function createPrintStore() {
 		 */
 		setLayout: (layout: PageLayout): void => {
 			update((s) => {
-				const pageSize = layout === 'custom'
+				const pageSize = (layout === 'custom' || !(layout in PAGE_SIZES))
 					? s.settings.pageSize
 					: { ...PAGE_SIZES[layout] };
 				return {

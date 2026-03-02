@@ -216,14 +216,21 @@ export interface UrlSyncConfig {
 }
 
 // Print configuration
+export interface PrintLayoutDef {
+	label: string;
+	mapElementSize?: [number, number]; // pixel dimensions for MapFish Print backend
+}
+
 export interface PrintConfig {
-	mode?: string;
-	defaultScale?: number;
-	scales?: number[];
-	outputFormats?: { name: string; mimetype: string }[];
-	pageSizes?: { name: string; width: number; height: number }[];
-	defaultPageSize?: string;
-	printUrl?: string;
+	pageLayoutDefs?: Record<string, PrintLayoutDef>; // all defined layouts with print-server specs
+	enabledPageLayouts?: string[];                   // subset of pageLayoutDefs keys shown in UI
+	availableScales?: number[];
+	minPageSize?: number;          // backend pixel constraint
+	maxPageSize?: number;          // backend pixel constraint
+	downloadPrefix?: string;
+	chooseCells?: boolean;
+	chooseStreetIndex?: boolean;
+	conditionsOfUse?: boolean;
 }
 
 // Geolocation configuration

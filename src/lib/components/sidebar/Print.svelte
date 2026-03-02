@@ -3,6 +3,7 @@
 	import { mapStore } from '$lib/stores/mapStore';
 	import { layerStore } from '$lib/stores/layerStore';
 	import { drawStore, drawFeatureCount, drawLayerVisible } from '$lib/stores/drawStore';
+	import { appConfig } from '$lib/stores/configStore';
 	import {
 		printStore,
 		printSettings,
@@ -12,36 +13,87 @@
 		MIN_SCALE,
 		MAX_SCALE,
 		MIN_PAGE_SIZE,
-		MAX_PAGE_SIZE,
-		type PageLayout
+		MAX_PAGE_SIZE
 	} from '$lib/stores/printStore';
+
+	// Paper sizes in ascending order (A5 = smallest, A0 = largest)
+	const SIZE_ORDER = ['a5', 'a4', 'a3', 'a2', 'a1', 'a0'];
 
 	let scaleInput = $state($printSettings.scale);
 	let widthInput = $state($printSettings.pageSize.width);
 	let heightInput = $state($printSettings.pageSize.height);
+	let sliderIndex = $state(0);
 
-	// Sync inputs when settings change externally
-	$effect(() => {
-		scaleInput = $printSettings.scale;
-	});
+	// Layouts enabled in this config (with fallback to A4+A3)
+	const enabledLayouts = $derived(
+		$appConfig?.printConfig?.enabledPageLayouts ??
+		['a4-portrait', 'a4-landscape', 'a3-portrait', 'a3-landscape']
+	);
+
+	// Unique paper sizes present in enabledLayouts, in size order
+	const availableSizes = $derived(
+		SIZE_ORDER.filter(size => enabledLayouts.some(l => l.startsWith(size + '-')))
+	);
+
+	// Whether user has entered custom (non-ISO) dimensions
+	const isCustomLayout = $derived($printSettings.layout === 'custom');
+
+	// Current paper size key (e.g. 'a4') and orientation ('portrait'/'landscape')
+	const currentSize = $derived(
+		isCustomLayout ? null : $printSettings.layout.split('-')[0]
+	);
+	const currentOrientation = $derived(
+		isCustomLayout ? null : ($printSettings.layout.split('-')[1] as 'portrait' | 'landscape')
+	);
+
+	// Sync scalar inputs when settings change externally
+	$effect(() => { scaleInput = $printSettings.scale; });
 	$effect(() => {
 		widthInput = $printSettings.pageSize.width;
 		heightInput = $printSettings.pageSize.height;
 	});
 
+	// Keep slider in sync with layout changes (but freeze position on custom)
+	$effect(() => {
+		if (!isCustomLayout && currentSize) {
+			const idx = availableSizes.indexOf(currentSize);
+			if (idx >= 0) sliderIndex = idx;
+		}
+	});
+
+	function isOrientationEnabled(orientation: 'portrait' | 'landscape'): boolean {
+		const size = availableSizes[sliderIndex] ?? 'a4';
+		return enabledLayouts.includes(`${size}-${orientation}`);
+	}
+
 	function handleBack() {
 		sidebarStore.hidePrint();
 	}
 
-	function handleLayoutSelect(layout: PageLayout) {
-		printStore.setLayout(layout);
+	function handleSliderChange(e: Event) {
+		const idx = parseInt((e.target as HTMLInputElement).value, 10);
+		sliderIndex = idx;
+		const size = availableSizes[idx];
+		const preferred = currentOrientation ?? 'portrait';
+		const key = `${size}-${preferred}`;
+		if (enabledLayouts.includes(key)) {
+			printStore.setLayout(key);
+		} else {
+			const alt = preferred === 'portrait' ? 'landscape' : 'portrait';
+			const altKey = `${size}-${alt}`;
+			if (enabledLayouts.includes(altKey)) printStore.setLayout(altKey);
+		}
+	}
+
+	function handleOrientationSelect(orientation: 'portrait' | 'landscape') {
+		const size = currentSize ?? (availableSizes[sliderIndex] ?? 'a4');
+		const key = `${size}-${orientation}`;
+		if (enabledLayouts.includes(key)) printStore.setLayout(key);
 	}
 
 	function handleScaleChange(e: Event) {
 		const value = parseInt((e.target as HTMLInputElement).value, 10);
-		if (!isNaN(value)) {
-			printStore.setScale(value);
-		}
+		if (!isNaN(value)) printStore.setScale(value);
 	}
 
 	function handleScaleBlur() {
@@ -116,46 +168,56 @@
 	</button>
 
 	<div class="print-content">
-		<!-- Page Layouts -->
+		<!-- Paper size slider + orientation toggle -->
 		<div class="form-group">
 			<label class="form-label">Seitengröße</label>
-			<div class="layout-grid">
-				<button
-					class="layout-btn"
-					class:selected={$printSettings.layout === 'a4_portrait'}
-					onclick={() => handleLayoutSelect('a4_portrait')}
-					disabled={isProcessing}
-				>
-					<div class="layout-icon portrait"><span>A4</span></div>
-					<span class="layout-label">Hochformat</span>
-				</button>
-				<button
-					class="layout-btn"
-					class:selected={$printSettings.layout === 'a4_landscape'}
-					onclick={() => handleLayoutSelect('a4_landscape')}
-					disabled={isProcessing}
-				>
-					<div class="layout-icon landscape"><span>A4</span></div>
-					<span class="layout-label">Querformat</span>
-				</button>
-				<button
-					class="layout-btn"
-					class:selected={$printSettings.layout === 'a3_portrait'}
-					onclick={() => handleLayoutSelect('a3_portrait')}
-					disabled={isProcessing}
-				>
-					<div class="layout-icon portrait a3"><span>A3</span></div>
-					<span class="layout-label">Hochformat</span>
-				</button>
-				<button
-					class="layout-btn"
-					class:selected={$printSettings.layout === 'a3_landscape'}
-					onclick={() => handleLayoutSelect('a3_landscape')}
-					disabled={isProcessing}
-				>
-					<div class="layout-icon landscape a3"><span>A3</span></div>
-					<span class="layout-label">Querformat</span>
-				</button>
+			<div class="size-selector" class:is-custom={isCustomLayout}>
+				{#if availableSizes.length > 1}
+					<input
+						class="size-slider"
+						type="range"
+						min="0"
+						max={availableSizes.length - 1}
+						step="1"
+						value={sliderIndex}
+						oninput={handleSliderChange}
+						disabled={isProcessing}
+						aria-label="Papiergröße wählen"
+					/>
+					<div class="size-labels" aria-hidden="true">
+						{#each availableSizes as size}
+							<span
+								class="size-label"
+								class:active={size === currentSize && !isCustomLayout}
+							>{size.toUpperCase()}</span>
+						{/each}
+					</div>
+				{/if}
+				<div class="orientation-row">
+					<button
+						class="orientation-btn"
+						class:selected={currentOrientation === 'portrait' && !isCustomLayout}
+						onclick={() => handleOrientationSelect('portrait')}
+						disabled={isProcessing || !isOrientationEnabled('portrait')}
+						title="Hochformat"
+					>
+						<div class="page-icon portrait"></div>
+						<span>Hochformat</span>
+					</button>
+					<button
+						class="orientation-btn"
+						class:selected={currentOrientation === 'landscape' && !isCustomLayout}
+						onclick={() => handleOrientationSelect('landscape')}
+						disabled={isProcessing || !isOrientationEnabled('landscape')}
+						title="Querformat"
+					>
+						<div class="page-icon landscape"></div>
+						<span>Querformat</span>
+					</button>
+					{#if isCustomLayout}
+						<span class="custom-label">Benutzerdefiniert</span>
+					{/if}
+				</div>
 			</div>
 		</div>
 
@@ -353,74 +415,113 @@
 		flex: 1;
 	}
 
-	/* Layout grid */
-	.layout-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
+	/* Size selector: slider + orientation toggle */
+	.size-selector {
+		display: flex;
+		flex-direction: column;
 		gap: 8px;
 	}
 
-	.layout-btn {
+	.size-slider {
+		width: 100%;
+		cursor: pointer;
+		accent-color: #2196f3;
+		transition: opacity 0.2s;
+	}
+
+	/* When user has entered custom dimensions, grey out the slider thumb */
+	.size-selector.is-custom .size-slider {
+		opacity: 0.35;
+	}
+
+	.size-selector.is-custom .size-slider::-webkit-slider-thumb {
+		background: #bdbdbd;
+	}
+	.size-selector.is-custom .size-slider::-moz-range-thumb {
+		background: #bdbdbd;
+	}
+
+	.size-labels {
 		display: flex;
-		flex-direction: column;
+		justify-content: space-between;
+		padding: 0 10px; /* approximate thumb half-width offset */
+		margin-top: -4px;
+	}
+
+	.size-label {
+		font-size: 11px;
+		color: #aaa;
+		text-align: center;
+		flex: 1;
+		transition: color 0.15s, font-weight 0.15s;
+	}
+
+	.size-label.active {
+		color: #2196f3;
+		font-weight: 700;
+	}
+
+	/* Orientation toggle */
+	.orientation-row {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.orientation-btn {
+		display: flex;
 		align-items: center;
 		gap: 6px;
-		padding: 10px 8px;
+		padding: 7px 12px;
 		background: white;
 		border: 2px solid #e0e0e0;
-		border-radius: 6px;
+		border-radius: 4px;
 		cursor: pointer;
+		font-size: 12px;
+		color: #333;
 		transition: border-color 0.15s, background-color 0.15s;
 	}
 
-	.layout-btn:hover:not(:disabled) {
+	.orientation-btn:hover:not(:disabled) {
 		border-color: #ccc;
 	}
 
-	.layout-btn.selected {
+	.orientation-btn.selected {
 		border-color: #2196f3;
 		background: #e3f2fd;
 	}
 
-	.layout-btn:disabled {
-		opacity: 0.5;
+	.orientation-btn:disabled {
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
-	.layout-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #f0f0f0;
-		border: 1px solid #ccc;
-		font-size: 10px;
-		font-weight: 600;
-		color: #666;
+	.page-icon {
+		background: #e0e0e0;
+		border: 1px solid #aaa;
+		flex-shrink: 0;
 	}
 
-	.layout-icon.portrait {
-		width: 32px;
-		height: 44px;
+	.page-icon.portrait {
+		width: 14px;
+		height: 20px;
 	}
 
-	.layout-icon.landscape {
-		width: 44px;
-		height: 32px;
+	.page-icon.landscape {
+		width: 20px;
+		height: 14px;
 	}
 
-	.layout-icon.a3.portrait {
-		width: 38px;
-		height: 52px;
+	.orientation-btn.selected .page-icon {
+		background: #90caf9;
+		border-color: #42a5f5;
 	}
 
-	.layout-icon.a3.landscape {
-		width: 52px;
-		height: 38px;
-	}
-
-	.layout-label {
+	.custom-label {
 		font-size: 11px;
-		color: #333;
+		color: #9e9e9e;
+		font-style: italic;
+		margin-left: auto;
 	}
 
 	.size-separator {
@@ -550,11 +651,6 @@
 		font-size: 13px;
 		line-height: 1.5;
 		text-align: center;
-	}
-
-	.status-processing {
-		background: #fff8e1;
-		color: #f57f17;
 	}
 
 	.status-ready {

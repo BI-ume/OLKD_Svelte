@@ -194,13 +194,13 @@ export interface ComponentsConfig {
 	overviewmap?: boolean;
 	layerswitcher?: boolean;
 	sidebar?: boolean;
+	catalog?: boolean;
 	searchCatalog?: boolean;
-	// Future / not yet configurable
 	legend?: boolean;
 	print?: boolean;
-	catalog?: boolean;
-	alkis?: boolean;
 	draw?: boolean;
+	// Future / not yet configurable
+	alkis?: boolean;
 }
 
 // Sidebar configuration

@@ -26,6 +26,7 @@
 		FeatureInfo
 	} from '$lib/components/controls';
 	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
+    import { fade } from 'svelte/transition';
 
 	// Get config ID from route parameter
 	let configId = $derived($page.params.config || 'default');
@@ -77,6 +78,13 @@
 		}
 	});
 
+	let windowWidth = $state(window.innerWidth);
+	$effect(() => {
+		const onResize = () => { windowWidth = window.innerWidth; };
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	});
+	let isMapNarrow = $derived(windowWidth < 500 && $sidebarIsOpen);
 	// Check which components are enabled (default to true unless explicitly disabled)
 	let showSearch = $derived($componentsConfig?.search !== false);
 	let showZoomControls = $derived($componentsConfig?.zoomControls !== false);
@@ -85,8 +93,8 @@
 	let showGotoButton = $derived($componentsConfig?.gotoButton !== false);
 	let showMeasure = $derived($componentsConfig?.measure !== false);
 	let showSaveSettings = $derived($componentsConfig?.saveSettings !== false);
-	let showScaleLine = $derived($componentsConfig?.scaleLine !== false);
-	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false);
+	let showScaleLine = $derived($componentsConfig?.scaleLine !== false && !isMapNarrow);
+	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false && !isMapNarrow);
 	let showSidebar = $derived($componentsConfig?.sidebar !== false);
 	let showDraw = $derived($componentsConfig?.draw !== false);
 </script>
@@ -155,10 +163,14 @@
 				{/if}
 			</div>
 			{#if showScaleLine}
-				<ScaleLine sidebarOpen={$sidebarIsOpen} />
+				<div transition:fade={{ duration: 200 }}>
+					<ScaleLine sidebarOpen={$sidebarIsOpen} />
+				</div>
 			{/if}
 			{#if showOverviewMap}
-				<OverviewMap sidebarOpen={$sidebarIsOpen} />
+				<div transition:fade={{ duration: 200 }}>
+					<OverviewMap sidebarOpen={$sidebarIsOpen} />
+				</div>
 			{/if}
 			<Attribution />
 			<PrintPreview />

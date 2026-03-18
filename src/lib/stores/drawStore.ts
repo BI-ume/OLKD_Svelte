@@ -367,6 +367,14 @@ function createDrawStore() {
 					// Deactivate draw tool and open popup at feature
 					const coord = getFeatureCoordinate(feature);
 
+					// Center map on the new feature
+					const geom = feature.getGeometry();
+					if (geom && map) {
+						const extent = geom.getExtent();
+						const center: Coordinate = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+						map.getView().animate({ center, duration: 400 });
+					}
+
 					// Suppress singleclick handler so it doesn't close the popup
 					suppressClickUntil = Date.now() + 500;
 

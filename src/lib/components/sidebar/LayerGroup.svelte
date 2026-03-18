@@ -108,6 +108,17 @@
 			<span class="group-title">{group.title}</span>
 		</button>
 
+		<button
+			class="drag-handle"
+			title="Reihenfolge ändern"
+			aria-label="Layer verschieben"
+			tabindex="-1"
+		>
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+				<path d="M12 2L4 9h16L12 2zm0 20l8-7H4l8 7z"/>
+			</svg>
+		</button>
+
 		{#if hasMenuItems}
 			<div class="menu-container" bind:this={menuContainer}>
 				<button
@@ -164,7 +175,7 @@
 
 	.group-header {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		gap: 4px;
 	}
 
@@ -315,6 +326,30 @@
 
 	.menu-item svg {
 		flex-shrink: 0;
+	}
+
+	.drag-handle {
+		background: none;
+		border: none;
+		cursor: grab;
+		padding: 4px 2px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ccc;
+		border-radius: 4px;
+		flex-shrink: 0;
+		transition: color 0.15s, background-color 0.15s;
+		touch-action: none;
+	}
+
+	.drag-handle:hover {
+		color: #888;
+		background-color: #f0f0f0;
+	}
+
+	.drag-handle:active {
+		cursor: grabbing;
 	}
 
 	.group-layers {

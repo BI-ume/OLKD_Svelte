@@ -13,6 +13,9 @@
 	let dropPosition = $state<'above' | 'below' | null>(null);
 	let mousedownTarget: HTMLElement | null = null;
 
+	// Touch drag state
+	let touchDragging = $state(false);
+
 	let showDrawMenu = $state(false);
 	let drawMenuContainer: HTMLDivElement;
 
@@ -59,7 +62,7 @@
 
 	// Drag and drop handlers
 	function handleDragStart(event: DragEvent, groupName: string) {
-		if (mousedownTarget?.closest('.menu-container') || mousedownTarget?.closest('.menu-dropdown')) {
+		if (!mousedownTarget?.closest('.drag-handle')) {
 			event.preventDefault();
 			return;
 		}
@@ -105,9 +108,43 @@
 		dropTargetIndex = null;
 		dropPosition = null;
 	}
+
+	// Touch drag handlers
+	function handleTouchStart(event: TouchEvent, groupName: string) {
+		const target = event.target as HTMLElement;
+		if (!target.closest('.drag-handle')) return;
+		event.preventDefault();
+		touchDragging = true;
+		draggedGroupName = groupName;
+	}
+
+	function handleTouchMove(event: TouchEvent) {
+		if (!touchDragging || !draggedGroupName) return;
+		event.preventDefault();
+		const touch = event.touches[0];
+		const el = document.elementFromPoint(touch.clientX, touch.clientY);
+		const wrapper = el?.closest('[data-drag-index]') as HTMLElement | null;
+		if (wrapper) {
+			const index = parseInt(wrapper.dataset.dragIndex ?? '-1');
+			if (index !== -1) {
+				const rect = wrapper.getBoundingClientRect();
+				dropTargetIndex = index;
+				dropPosition = touch.clientY - rect.top < rect.height / 2 ? 'above' : 'below';
+			}
+		} else {
+			dropTargetIndex = null;
+			dropPosition = null;
+		}
+	}
+
+	function handleTouchEnd() {
+		if (!touchDragging) return;
+		handleDragEnd();
+		touchDragging = false;
+	}
 </script>
 
-<svelte:window onclick={handleWindowClick} />
+<svelte:window onclick={handleWindowClick} ontouchmove={handleTouchMove} ontouchend={handleTouchEnd} />
 
 <section class="overlay-section">
 	<h3 class="section-title">Themen | Inhalte</h3>
@@ -122,12 +159,14 @@
 					class:drag-over-above={dropTargetIndex === index && dropPosition === 'above'}
 					class:drag-over-below={dropTargetIndex === index && dropPosition === 'below'}
 					class:dragging={draggedGroupName === group.name}
+					data-drag-index={index}
 					draggable="true"
 					onmousedown={handleMouseDown}
 					ondragstart={(e) => handleDragStart(e, group.name)}
 					ondragend={handleDragEnd}
 					ondragover={(e) => handleDragOver(e, index)}
 					ondragleave={handleDragLeave}
+					ontouchstart={(e) => handleTouchStart(e, group.name)}
 					role="listitem"
 				>
 					<LayerGroup {group} onRemove={handleRemoveGroup} />
@@ -238,13 +277,8 @@
 	}
 
 	.group-wrapper {
-		cursor: grab;
 		border-radius: 4px;
 		transition: opacity 0.15s;
-	}
-
-	.group-wrapper:active {
-		cursor: grabbing;
 	}
 
 	.group-wrapper.dragging {

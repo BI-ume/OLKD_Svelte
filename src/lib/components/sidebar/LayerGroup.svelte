@@ -115,7 +115,7 @@
 			tabindex="-1"
 		>
 			<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-				<path d="M12 2L4 9h16L12 2zm0 20l8-7H4l8 7z"/>
+				<path d="M3 9h18v2H3V9zm0 4h18v2H3v-2z"/>
 			</svg>
 		</button>
 

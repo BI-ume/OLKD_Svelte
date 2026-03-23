@@ -6,7 +6,6 @@
 	import { isEmpty } from 'ol/extent';
 	import type { Extent } from 'ol/extent';
 	import LayerGroup from './LayerGroup.svelte';
-	import type { Group } from '$lib/layers/Group';
 
 	let draggedGroupName = $state<string | null>(null);
 	let dropTargetIndex = $state<number | null>(null);

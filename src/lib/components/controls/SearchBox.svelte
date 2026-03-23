@@ -9,7 +9,6 @@
 	import { Vector as VectorLayer } from 'ol/layer';
 	import { Style, Fill, Stroke, Circle as CircleStyle } from 'ol/style';
 	import type { Map } from 'ol';
-	import type { Geometry } from 'ol/geom';
 	import Point from 'ol/geom/Point';
 	import { Z_INDEX } from '$lib/constants';
 

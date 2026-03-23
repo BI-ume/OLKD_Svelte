@@ -25,9 +25,14 @@
 	function zoomToDrawing() {
 		const source = drawStore.getSource();
 		if (source) {
-			const extent = source.getExtent() as Extent;
+			const extent = source.getExtent();
 			if (!isEmpty(extent)) {
-				mapStore.zoomToExtent(extent, [50, 50, 50, SIDEBAR_WIDTH + 50]);
+				const view = mapStore.getView();
+				view?.fit(extent, {
+					padding: [50, 50, 50, SIDEBAR_WIDTH + 50],
+					duration: 500,
+					maxZoom: 14
+				});
 			}
 		}
 		showDrawMenu = false;

@@ -74,7 +74,7 @@
 				initialized = true;
 
 				// Auto-start help tour on first visit
-				if ($componentsConfig?.help !== false && !helpStore.hasBeenSeen()) {
+				if ($componentsConfig?.helpTour !== false && !helpStore.hasBeenSeen()) {
 					sidebarStore.open();
 					setTimeout(() => helpStore.start(), 600);
 				}
@@ -105,7 +105,7 @@
 	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false && !isMapNarrow);
 	let showSidebar = $derived($componentsConfig?.sidebar !== false);
 	let showDraw = $derived($componentsConfig?.draw !== false);
-	let showHelp = $derived($componentsConfig?.help !== false);
+	let showHelp = $derived($componentsConfig?.helpTour !== false);
 </script>
 
 <div class="map-app">
@@ -152,15 +152,17 @@
 				<SearchBox sidebarOpen={$sidebarIsOpen} />
 			{/if}
 			<div class="left-controls" class:sidebar-open={$sidebarIsOpen}>
-				{#if showZoomControls}
-					<ZoomControls sidebarOpen={$sidebarIsOpen} />
-				{/if}
-				{#if showHomeButton}
-					<HomeButton sidebarOpen={$sidebarIsOpen} />
-				{/if}
-				{#if showGeolocation}
-					<Geolocation sidebarOpen={$sidebarIsOpen} />
-				{/if}
+				<div class="map-navigation" data-tour="map-navi">
+					{#if showZoomControls}
+						<ZoomControls sidebarOpen={$sidebarIsOpen} />
+					{/if}
+					{#if showHomeButton}
+						<HomeButton sidebarOpen={$sidebarIsOpen} />
+					{/if}
+					{#if showGeolocation}
+						<Geolocation sidebarOpen={$sidebarIsOpen} />
+					{/if}
+				</div>
 				{#if showGotoButton}
 					<GotoButton />
 				{/if}
@@ -233,6 +235,13 @@
 		gap: 4px;
 		z-index: 100;
 		transition: left 0.3s ease;
+	}
+
+	.left-controls .map-navigation {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		z-index: 100;
 	}
 
 	.left-controls.sidebar-open {

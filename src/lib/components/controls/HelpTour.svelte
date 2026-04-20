@@ -85,7 +85,7 @@
 		{
 			id: 'zoom',
 			title: 'Zoom & Navigation',
-			selector: '[data-tour="zoom-controls"]',
+			selector: '[data-tour="map-navi"]',
 			description:
 				'Zoomen Sie mit den Plus- und Minus-Schaltflächen oder dem Mausrad. Der Haus-Button setzt die Ansicht auf den Standardausschnitt von Bielefeld zurück. Über das Standort-Symbol springen Sie zu Ihrem aktuellen Ort.'
 		},

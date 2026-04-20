@@ -112,8 +112,8 @@
 					</svg>
 				{/if}
 			</span>
+			<span class="layer-title" class:visible title={layer.title}>{layer.title}</span>
 		</button>
-		<span class="layer-title" class:visible title={layer.title}>{layer.title}</span>
 
 		{#if hasMenuItems && visible}
 			<div class="menu-container" bind:this={menuContainer}>
@@ -219,6 +219,7 @@
 	.layer-row {
 		display: flex;
 		align-items: flex-start;
+		justify-content: space-between;
 		gap: 6px;
 	}
 
@@ -228,12 +229,11 @@
 		cursor: pointer;
 		padding: 2px;
 		display: flex;
-		align-items: center;
-		justify-content: center;
+		gap: 6px;
+		text-align: start;
 		color: #666;
 		border-radius: 4px;
 		transition: background-color 0.15s;
-		flex-shrink: 0;
 	}
 
 	.visibility-btn:hover {

@@ -54,6 +54,8 @@ export {
 
 export { measureActive } from './measureStore';
 
+export { helpStore, helpIsActive } from './helpStore';
+
 export {
 	printStore,
 	printIsOpen,

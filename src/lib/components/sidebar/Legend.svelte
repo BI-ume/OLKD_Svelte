@@ -96,7 +96,7 @@
 	}
 </script>
 
-<section class="legend-section">
+<section class="legend-section" data-tour="legend">
 	<button
 		class="section-header"
 		onclick={() => sectionCollapsed = !sectionCollapsed}

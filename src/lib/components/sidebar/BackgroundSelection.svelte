@@ -22,7 +22,7 @@
 	`);
 </script>
 
-<section class="background-selection">
+<section class="background-selection" data-tour="background-selection">
 	<button class="section-header" onclick={toggleCollapse}>
 		<svg class="collapse-icon" class:collapsed={isCollapsed} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 			<polyline points="6 9 12 15 18 9"></polyline>

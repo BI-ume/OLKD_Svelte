@@ -199,6 +199,7 @@ export interface ComponentsConfig {
 	legend?: boolean;
 	print?: boolean;
 	draw?: boolean;
+	helpTour?: boolean;
 	// Future / not yet configurable
 	alkis?: boolean;
 }

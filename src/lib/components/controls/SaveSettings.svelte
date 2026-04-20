@@ -283,7 +283,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="settings-control">
+<div class="settings-control" data-tour="save-settings">
 	<button
 		class="settings-btn"
 		onclick={openDialog}

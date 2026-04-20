@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { sidebarStore, sidebarIsOpen, sidebarShowCatalog, sidebarShowPrint, sidebarShowDraw } from '$lib/stores/sidebarStore';
 	import { configStore, componentsConfig } from '$lib/stores/configStore';
+	import { helpStore } from '$lib/stores/helpStore';
 	import { SearchBox } from '$lib/components/controls';
 	import BackgroundSelection from './BackgroundSelection.svelte';
 	import OverlaySelection from './OverlaySelection.svelte';
@@ -15,6 +16,7 @@
 	let showLegend = $derived($configStore.app?.components?.legend !== false);
 	let showPrintButton = $derived($configStore.app?.components?.print !== false);
 	let showDrawButton = $derived($configStore.app?.components?.draw !== false);
+	let showHelp = $derived($configStore.app?.components?.helpTour !== false);
 	let showSecondary = $derived($sidebarShowCatalog || $sidebarShowPrint || $sidebarShowDraw);
 
 	// Header
@@ -83,7 +85,7 @@
 				{#if showPrintButton || showDrawButton}
 					<div class="action-row">
 						{#if showPrintButton}
-							<button class="action-btn" onclick={handleOpenPrint}>
+							<button class="action-btn" onclick={handleOpenPrint} data-tour="print-btn">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<polyline points="6 9 6 2 18 2 18 9"></polyline>
 									<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -93,7 +95,7 @@
 							</button>
 						{/if}
 						{#if showDrawButton}
-							<button class="action-btn" onclick={handleOpenDraw}>
+							<button class="action-btn" onclick={handleOpenDraw} data-tour="draw-btn">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M12 20h9"></path>
 									<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -107,6 +109,11 @@
 					<a href={nutzungsbedingungenUrl} target="_blank" rel="noopener noreferrer">
 						Nutzungsbedingungen
 					</a>
+					{#if showHelp}
+						<button class="help-link" onclick={() => helpStore.start()} title="Hilfe-Tour starten">
+							Hilfe
+						</button>
+					{/if}
 					<a href={mailtoHref} class="email-link" title="Feedback senden">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -356,14 +363,23 @@
 		justify-content: space-between;
 	}
 
-	.footer-links a {
+	.footer-links a,
+	.help-link {
 		font-size: 12px;
 		color: #666;
 		text-decoration: none;
 		transition: color 0.15s;
 	}
 
-	.footer-links a:hover {
+	.help-link {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+
+	.footer-links a:hover,
+	.help-link:hover {
 		color: #E2001A;
 		text-decoration: underline;
 	}

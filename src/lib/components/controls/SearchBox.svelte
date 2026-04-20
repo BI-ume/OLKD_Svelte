@@ -240,7 +240,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="search-box" class:sidebar-open={sidebarOpen} class:embedded>
+<div class="search-box" class:sidebar-open={sidebarOpen} class:embedded data-tour="search">
 	<div class="search-input-wrapper">
 		<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 			<circle cx="11" cy="11" r="8"></circle>

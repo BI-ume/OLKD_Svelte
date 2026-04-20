@@ -23,8 +23,10 @@
 		PrintPreview,
 		DrawLayer,
 		DrawStylePopup,
-		FeatureInfo
+		FeatureInfo,
+		HelpTour
 	} from '$lib/components/controls';
+	import { helpStore } from '$lib/stores/helpStore';
 	import MetadataPopup from '$lib/components/sidebar/MetadataPopup.svelte';
     import { fade } from 'svelte/transition';
 
@@ -70,6 +72,12 @@
 				urlMapState = applyUrlLayerState();
 
 				initialized = true;
+
+				// Auto-start help tour on first visit
+				if ($componentsConfig?.help !== false && !helpStore.hasBeenSeen()) {
+					sidebarStore.open();
+					setTimeout(() => helpStore.start(), 600);
+				}
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load configuration';
@@ -97,6 +105,7 @@
 	let showOverviewMap = $derived($componentsConfig?.overviewmap !== false && !isMapNarrow);
 	let showSidebar = $derived($componentsConfig?.sidebar !== false);
 	let showDraw = $derived($componentsConfig?.draw !== false);
+	let showHelp = $derived($componentsConfig?.help !== false);
 </script>
 
 <div class="map-app">
@@ -189,6 +198,9 @@
 		</div>
 		{#if showSidebar}
 			<Sidebar />
+		{/if}
+		{#if showHelp}
+			<HelpTour />
 		{/if}
 	{:else}
 		<div class="error">

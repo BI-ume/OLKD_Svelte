@@ -156,6 +156,7 @@
 	class="scale-line"
 	class:sidebar-open={sidebarOpen}
 	bind:this={containerElement}
+	data-tour="scale-line"
 	onclick={handleClick}
 	title="Maßstab einstellen"
 	aria-label="Maßstab einstellen"

@@ -394,7 +394,7 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<div class="measure-control">
+<div class="measure-control" data-tour="measure">
 	<button
 		class="measure-btn"
 		class:active={isOpen || activeMode !== 'none'}

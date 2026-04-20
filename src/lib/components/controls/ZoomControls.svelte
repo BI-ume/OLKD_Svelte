@@ -59,7 +59,7 @@
 	}
 </script>
 
-<div class="zoom-controls">
+<div class="zoom-controls" data-tour="zoom-controls">
 	<button
 		class="zoom-btn zoom-in"
 		onclick={zoomIn}

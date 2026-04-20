@@ -65,6 +65,7 @@ components:
     legend: true
     print: true
     draw: true
+    helpTour: true
 
 # URL sync configuration. modes: 
 # 'xyz' = position/zoom only

@@ -4,7 +4,6 @@
 	import { configStore } from '$lib/stores/configStore';
 	import { drawStore, drawFeatureCount, drawLayerVisible } from '$lib/stores/drawStore';
 	import { isEmpty } from 'ol/extent';
-	import type { Extent } from 'ol/extent';
 	import LayerGroup from './LayerGroup.svelte';
 
 	let draggedGroupName = $state<string | null>(null);
@@ -150,7 +149,7 @@
 
 <svelte:window onclick={handleWindowClick} ontouchmove={handleTouchMove} ontouchend={handleTouchEnd} />
 
-<section class="overlay-section">
+<section class="overlay-section" data-tour="overlay-selection">
 	<h3 class="section-title">Themen | Inhalte</h3>
 
 	{#if $overlayGroups.length === 0}
@@ -238,7 +237,7 @@
 	{/if}
 
 	{#if showCatalogButton}
-		<button class="catalog-btn" onclick={handleOpenCatalog}>
+		<button class="catalog-btn" onclick={handleOpenCatalog} data-tour="catalog-btn">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
 				<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>

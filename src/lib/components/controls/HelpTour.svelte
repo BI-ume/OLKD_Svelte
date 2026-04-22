@@ -101,7 +101,7 @@
 	const TOTAL = TOUR_STEPS.length;
 
 	let spotlightStyle = $state('');
-	let cardStyle = $state('bottom: 24px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 32px))');
+	let cardStyle = $state('');
 	let hasSpotlight = $state(false);
 
 	$effect(() => {
@@ -207,97 +207,99 @@
 	{/if}
 
 	<!-- Step card -->
-	<div
-		class="tour-card"
-		style={cardStyle}
-		role="dialog"
-		aria-modal="true"
-		aria-label="Hilfe: {step.title}"
-		transition:fly={{x: -500}}
-	>
-		<!-- Table of contents panel -->
-		{#if $helpStore.tocOpen}
-			<div class="toc-panel" transition:slide={{axis: 'x'}}>
-				<div class="toc-title">Inhaltsverzeichnis</div>
-				<ul class="toc-list">
-					{#each TOUR_STEPS as s, i}
-						<li>
+	{#if cardStyle}
+		<div
+			class="tour-card"
+			style={cardStyle}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Hilfe: {step.title}"
+			transition:fly|global={{x: -500}}
+		>
+			<!-- Table of contents panel -->
+			{#if $helpStore.tocOpen}
+				<div class="toc-panel" transition:slide={{axis: 'x'}}>
+					<div class="toc-title">Inhaltsverzeichnis</div>
+					<ul class="toc-list">
+						{#each TOUR_STEPS as s, i}
+							<li>
+								<button
+									class="toc-item"
+									class:active={i === $helpStore.currentStep}
+									onclick={() => helpStore.goToStep(i)}
+								>
+									<span class="toc-num">{i + 1}</span>
+									{s.title}
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/if}
+
+			<!-- Main content -->
+			<div class="card-main">
+				<div class="card-header">
+					<button
+						class="toc-btn"
+						class:active={$helpStore.tocOpen}
+						onclick={() => helpStore.toggleToc()}
+						title="Inhaltsverzeichnis"
+						aria-label="Inhaltsverzeichnis"
+						aria-expanded={$helpStore.tocOpen}
+					>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="3" y1="6" x2="21" y2="6"></line>
+							<line x1="3" y1="12" x2="15" y2="12"></line>
+							<line x1="3" y1="18" x2="18" y2="18"></line>
+						</svg>
+					</button>
+					<span class="step-counter">Schritt {$helpStore.currentStep + 1} von {TOTAL}</span>
+					<button class="close-btn" onclick={() => helpStore.end()} aria-label="Tour beenden">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+
+				<h3 class="step-title">{step.title}</h3>
+				<p class="step-desc">{step.description}</p>
+
+				<div class="card-footer">
+					<button
+						class="nav-btn"
+						onclick={() => helpStore.prev()}
+						disabled={$helpStore.currentStep === 0}
+						aria-label="Vorheriger Schritt"
+					>
+						← Zurück
+					</button>
+					<div class="step-dots">
+						{#each TOUR_STEPS as _, i}
 							<button
-								class="toc-item"
+								class="dot"
 								class:active={i === $helpStore.currentStep}
 								onclick={() => helpStore.goToStep(i)}
-							>
-								<span class="toc-num">{i + 1}</span>
-								{s.title}
-							</button>
-						</li>
-					{/each}
-				</ul>
-			</div>
-		{/if}
-
-		<!-- Main content -->
-		<div class="card-main">
-			<div class="card-header">
-				<button
-					class="toc-btn"
-					class:active={$helpStore.tocOpen}
-					onclick={() => helpStore.toggleToc()}
-					title="Inhaltsverzeichnis"
-					aria-label="Inhaltsverzeichnis"
-					aria-expanded={$helpStore.tocOpen}
-				>
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<line x1="3" y1="6" x2="21" y2="6"></line>
-						<line x1="3" y1="12" x2="15" y2="12"></line>
-						<line x1="3" y1="18" x2="18" y2="18"></line>
-					</svg>
-				</button>
-				<span class="step-counter">Schritt {$helpStore.currentStep + 1} von {TOTAL}</span>
-				<button class="close-btn" onclick={() => helpStore.end()} aria-label="Tour beenden">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<line x1="18" y1="6" x2="6" y2="18"></line>
-						<line x1="6" y1="6" x2="18" y2="18"></line>
-					</svg>
-				</button>
-			</div>
-
-			<h3 class="step-title">{step.title}</h3>
-			<p class="step-desc">{step.description}</p>
-
-			<div class="card-footer">
-				<button
-					class="nav-btn"
-					onclick={() => helpStore.prev()}
-					disabled={$helpStore.currentStep === 0}
-					aria-label="Vorheriger Schritt"
-				>
-					← Zurück
-				</button>
-				<div class="step-dots">
-					{#each TOUR_STEPS as _, i}
+								aria-label="Zu Schritt {i + 1}"
+							></button>
+						{/each}
+					</div>
+					{#if $helpStore.currentStep < TOTAL - 1}
 						<button
-							class="dot"
-							class:active={i === $helpStore.currentStep}
-							onclick={() => helpStore.goToStep(i)}
-							aria-label="Zu Schritt {i + 1}"
-						></button>
-					{/each}
+							class="nav-btn primary"
+							onclick={() => helpStore.next(TOTAL)}
+							aria-label="Nächster Schritt"
+						>
+							Weiter →
+						</button>
+					{:else}
+						<button class="nav-btn primary" onclick={() => helpStore.end()}>Fertig ✓</button>
+					{/if}
 				</div>
-				{#if $helpStore.currentStep < TOTAL - 1}
-					<button
-						class="nav-btn primary"
-						onclick={() => helpStore.next(TOTAL)}
-						aria-label="Nächster Schritt"
-					>
-						Weiter →
-					</button>
-				{:else}
-					<button class="nav-btn primary" onclick={() => helpStore.end()}>Fertig ✓</button>
-				{/if}
 			</div>
 		</div>
-	</div>
+	{/if}
 {/if}
 
 <style>

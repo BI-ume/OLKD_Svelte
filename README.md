@@ -130,6 +130,16 @@ FLASK_APP=munimap.app:create_app flask run --host=0.0.0.0 --port=8080
 - `GET /static_geojson/<filename>` - Static GeoJSON files
 - `GET /health` - Health check
 
+## Development Workflow
+
+Thank you for considering contributing to this project! We appreciate your help in making it better.
+
+1. Create a new branch for your feature or bug fix: `git checkout -b feature/your-feature-name`.
+2. Make your changes and ensure they adhere to the project's coding style.
+3. Commit your changes using [Semantic Commit Messages](https://semantic-release.gitbook.io/semantic-release/#commit-message-format) to ensure clear and consistent commit history.
+4. Push your branch to your forked repository: `git push origin feature/your-feature-name`.
+5. Submit a pull request to the main repository's `main` branch, including a clear description of your changes.
+
 ## Building for Production
 
 ### With Docker

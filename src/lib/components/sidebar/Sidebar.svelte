@@ -13,6 +13,7 @@
 	import Draw from './Draw.svelte';
 
 	let showSearch = $derived($componentsConfig?.search !== false);
+	let showBackgroundSelection = $derived($configStore.app?.components?.backgroundSelection !== false);
 	let showLegend = $derived($configStore.app?.components?.legend !== false);
 	let showPrintButton = $derived($configStore.app?.components?.print !== false);
 	let showDrawButton = $derived($configStore.app?.components?.draw !== false);
@@ -74,7 +75,9 @@
 		<div class="main-panel" class:hidden={showSecondary}>
 			<div class="sidebar-card content-card">
 				<div class="scrollable">
-					<BackgroundSelection />
+					{#if showBackgroundSelection}
+						<BackgroundSelection />
+					{/if}
 					<OverlaySelection />
 					{#if showLegend}
 						<Legend />

@@ -41,7 +41,7 @@ OLKD_Svelte/
 │   │   ├── layers/               # Layer classes (TiledWMS, WMTS, etc.)
 │   │   ├── services/             # API client
 │   │   └── stores/               # Svelte stores (config, map, layers)
-│   └── routes/                   # SvelteKit routes
+│   └── routes/                   # SvelteKit routes (see layout hierarchy below)
 ├── backend/                      # Standalone Flask API
 │   ├── munimap/                  # Flask application
 │   ├── configs/                  # YAML configuration files
@@ -55,6 +55,14 @@ OLKD_Svelte/
 ├── nginx.conf                    # Production nginx config
 ├── start-dev.sh                  # Native development startup script
 └── package.json
+```
+
+## Route Layout Hierarchy
+
+```
+app/+layout.svelte               ← Map shell, Sidebar, navigation controls (all /app/* routes)
+  app/[[config]]/+layout.svelte  ← SearchBox, Print, Draw, MetadataPopup (generic apps)
+    app/[[config]]/+page.svelte  ← URL: /app/ or /app/<name>/
 ```
 
 ## Quick Start (Docker)

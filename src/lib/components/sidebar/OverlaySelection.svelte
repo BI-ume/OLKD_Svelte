@@ -156,7 +156,7 @@
 		<p class="no-layers">Keine Layer aktiv</p>
 	{:else}
 		<div class="groups-list">
-			{#each $overlayGroups as group, index (group.name)}
+			{#each $overlayGroups.filter((g) => g.showGroup !== false) as group, index (group.name)}
 				<div
 					class="group-wrapper"
 					class:drag-over-above={dropTargetIndex === index && dropPosition === 'above'}

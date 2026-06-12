@@ -63,7 +63,10 @@ OLKD_Svelte/
 app/+layout.svelte               ← Map shell, Sidebar, navigation controls (all /app/* routes)
   app/[[config]]/+layout.svelte  ← SearchBox, Print, Draw, MetadataPopup (generic apps)
     app/[[config]]/+page.svelte  ← URL: /app/ or /app/<name>/
+  app/transport/+page.svelte     ← DayNightSwitch, SearchConnection; URL: /app/transport/
 ```
+
+`app/transport/` is a static route and takes precedence over `[[config]]`, so it does not inherit the generic layout extras.
 
 ## Quick Start (Docker)
 
@@ -77,7 +80,7 @@ This starts:
 - Flask API on http://localhost:8080
 - SvelteKit dev server on http://localhost:5173
 
-Open http://localhost:5173/app/default/ to view the application.
+Open http://localhost:5173/app/default/ for the generic map app, or http://localhost:5173/app/transport/ for the ÖPNV transport app.
 
 Source code is mounted as volumes, so changes will hot-reload automatically.
 

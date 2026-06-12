@@ -11,6 +11,7 @@ from flask_cors import CORS
 from munimap.layers import load_layers_config, create_anol_layers
 from munimap.app_layers_def import prepare_layers_def, prepare_catalog_names, prepare_catalog_group_def
 from munimap.export import export_bp
+from munimap.munimap_transport.views import transport_api
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +59,7 @@ def create_app(config_path=None):
 
     # Register blueprints
     app.register_blueprint(export_bp)
+    app.register_blueprint(transport_api)
 
     # Configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -65,6 +67,15 @@ def create_app(config_path=None):
     app.config['APP_CONFIG_DIR'] = os.path.join(base_dir, 'configs', 'app_configs')
     app.config['STATIC_GEOJSON_DIR'] = os.path.join(base_dir, 'configs', 'static_geojson')
     app.config['PROXY_HASH_SALT'] = 'olkd-svelte-dev'
+
+    # Transport / ÖPNV configuration (override via environment variables in production)
+    app.config['SQLALCHEMY_LAYER_DATABASE_URI'] = os.environ.get('SQLALCHEMY_LAYER_DATABASE_URI', '')
+    app.config['TRANSPORT_OPERATOR'] = os.environ.get('TRANSPORT_OPERATOR', None)
+    app.config['TIMETABLE_DOCUMENTS_CSV'] = os.environ.get('TIMETABLE_DOCUMENTS_CSV', None)
+    app.config['TIMETABLE_DOCUMENTS_BASE_URL'] = os.environ.get('TIMETABLE_DOCUMENTS_BASE_URL', '')
+    app.config['TIMETABLE_NIGHTLINE_CSV'] = os.environ.get('TIMETABLE_NIGHTLINE_CSV', None)
+    app.config['TIMETABLE_NIGHTLINE_DOCUMENTS_BASE_URL'] = os.environ.get('TIMETABLE_NIGHTLINE_DOCUMENTS_BASE_URL', '')
+    app.config['TIMETABLE_CACHE_DIR'] = os.environ.get('TIMETABLE_CACHE_DIR', '/tmp')
 
     # Load layers configuration on startup
     layers_conf_dir = app.config['LAYERS_CONF_DIR']

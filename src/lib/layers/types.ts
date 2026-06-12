@@ -200,8 +200,19 @@ export interface ComponentsConfig {
 	print?: boolean;
 	draw?: boolean;
 	helpTour?: boolean;
+	transport?: boolean;
 	// Future / not yet configurable
 	alkis?: boolean;
+}
+
+// Transport / ÖPNV configuration
+export interface TransportConfig {
+	timetableServiceURL?: string;
+	stopfinderAPI?: string;
+	tripAPI?: string;
+	stopfinderPriorities?: string[];
+	dayLayers?: string[];
+	nightLayers?: string[];
 }
 
 // Sidebar configuration
@@ -270,6 +281,7 @@ export interface AppConfig {
 	printConfig?: PrintConfig;
 	geolocationConfig?: GeolocationConfig;
 	searchConfig?: SearchProviderConfig[];
+	transport?: TransportConfig;
 	backgrounds?: {
 		include?: string[];
 		exclude?: string[];

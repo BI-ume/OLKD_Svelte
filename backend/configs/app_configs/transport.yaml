@@ -1,0 +1,70 @@
+app:
+  title: 'ÖPNV Bielefeld'
+  headerLogoLink: 'https://bielefeld01.de/geo/portal/onlinekarten.php'
+  tooltipDelay: 50
+  showNoBackground: false
+
+map:
+  center:
+    - 468152.5616
+    - 5764386.17546
+  centerProjection: "EPSG:25832"
+  zoom: 11
+  projection: "EPSG:25832"
+  projectionExtent: [-46133.17, 5048875.26857567, 1206211.10142433, 6301219.54]
+  maxExtent:
+    - 371030.56
+    - 5672454.87
+    - 562875.71
+    - 5818346.28
+  minZoom: 6
+  maxZoom: 20
+  defaultBackground: stadtplan_bi
+
+backgrounds:
+  explicit:
+    - stadtplan_bi
+
+groups:
+  include:
+    - mobile_overlay
+
+layers:
+  include: []
+
+components:
+  sidebar: true
+  backgroundSelection: false
+  search: false
+  gotoButton: false
+  draw: false
+  helpTour: false
+  catalog: false
+  print: false
+  saveSettings: false
+  measure: false
+  overviewmap: false
+  scaleLine: false
+  zoomControls: true
+  homeButton: true
+  geolocation: true
+  transport: true
+
+sidebar:
+  defaultOpen: false
+
+urlSync:
+  mode: 'xyz'
+
+# Timetable / Stopfinder API configuration
+transport:
+  timetableServiceURL: 'https://westfalenfahrplan.de'
+  stopfinderAPI: '/nwl-efa/XML_STOPFINDER_REQUEST?coordOutputFormat=WGS84[dd.dddd]&language=de&locationInfoActive=1&locationServerActive=1&nwlStopFinderMacro=1&outputFormat=rapidJSON&serverInfo=1&sl3plusStopFinderMacro=1&type_sf=stop&version=10.4.18.18'
+  tripAPI: '/nwlsl3+/trip?lng=de&sharedLink=true'
+  stopfinderPriorities:
+    - 'bielefeld'
+    - 'bi-'
+  dayLayers:
+    - 'oepnv_tag'
+  nightLayers:
+    - 'oepnv_nacht'

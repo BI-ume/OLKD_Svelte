@@ -24,6 +24,7 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
+		"feiertagejs": "^1.5.1",
 		"ol": "^10.7.0",
 		"proj4": "^2.20.2"
 	}

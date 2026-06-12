@@ -156,7 +156,7 @@
 		bottom: 0;
 		width: var(--sidebar-width);
 		padding: 10px;
-		z-index: 5;
+		z-index: 15;
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
@@ -205,13 +205,13 @@
 		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 		overflow: hidden;
 		pointer-events: auto;
+		z-index: 10;
 	}
 
 	/* Header card: allow search results to overflow */
 	.header-card {
 		flex-shrink: 0;
 		overflow: visible;
-		z-index: 2;
 		border-top-right-radius: 0;
 	}
 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – bielefeldGEOCLIENT</title>
+  <link rel="stylesheet" href="{{ url_for('admin.static', filename='admin.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+</head>
+<body>
+
+<!-- ── SVG icon sprite ───────────────────────────────────────────────────── -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-search" viewBox="0 0 16 16">
+    <path d="M11.7 10.3a6 6 0 1 0-1.4 1.4l3.5 3.5 1.4-1.4-3.5-3.5zM7 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16">
+    <path d="M9 7V2H7v5H2v2h5v5h2V9h5V7H9z"/>
+  </symbol>
+  <symbol id="i-pencil" viewBox="0 0 16 16">
+    <path d="M12.1 1.5l2.4 2.4-1.5 1.5-2.4-2.4 1.5-1.5zM2 11.6l7.6-7.6 2.4 2.4L4.4 14H2v-2.4z"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16">
+    <path d="M6 2V1h4v1h4v2H2V2h4zM3 5h10l-.8 10H3.8L3 5zm3 2v6h1V7H6zm3 0v6h1V7H9z"/>
+  </symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 16 16">
+    <path d="M10.5 2.5L5 8l5.5 5.5 1.4-1.4L7.8 8l4.1-4.1-1.4-1.4z"/>
+  </symbol>
+  <symbol id="i-save" viewBox="0 0 16 16">
+    <path d="M2 2h10l2 2v10H2V2zm2 1v3h7V3H4zm-0 6v4h8V9H4z"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 16 16">
+    <path d="M6.5 11.2L3.3 8l-1.4 1.4 4.6 4.6 8-8L13.1 4.6l-6.6 6.6z"/>
+  </symbol>
+  <symbol id="i-user" viewBox="0 0 16 16">
+    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-3 0-6 1.5-6 4v1h12v-1c0-2.5-3-4-6-4z"/>
+  </symbol>
+  <symbol id="i-logout" viewBox="0 0 16 16">
+    <path d="M6 2h5v2H8v8h3v2H6V2zm6 3l3 3-3 3V9H9V7h3V5z"/>
+  </symbol>
+  <symbol id="i-login" viewBox="0 0 16 16">
+    <path d="M10 2H5v2h3v8H5v2h5V2zM4 5L1 8l3 3V9h3V7H4V5z" transform="scale(-1,1) translate(-16,0)"/>
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 16 16">
+    <path d="M2 3h2v2H2V3zm4 0h8v2H6V3zM2 7h2v2H2V7zm4 0h8v2H6V7zm-4 4h2v2H2v-2zm4 0h8v2H6v-2z"/>
+  </symbol>
+</svg>
+
+<!-- ── Login page ────────────────────────────────────────────────────────── -->
+<div id="login-page" class="standalone hidden">
+  <nav class="page-navbar">
+    <div class="container">
+      <img src="{{ url_for('admin.static', filename='logo-header.svg') }}" alt="bielefeldGEOCLIENT">
+    </div>
+  </nav>
+
+  <div class="page-title">
+    <div class="container">
+      <h2>Admin-Anmeldung</h2>
+    </div>
+  </div>
+
+  <div class="container page-content">
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="token-input">Admin-Token</label>
+        <input type="password" class="form-control" id="token-input"
+               autocomplete="current-password" autofocus placeholder="Token eingeben…">
+      </div>
+      <button type="submit" class="btn btn-success">
+        <svg class="icon"><use href="#i-login"/></svg> Anmelden
+      </button>
+      <p id="login-error" class="login-error"></p>
+    </form>
+
+    <div class="page-footer">
+      &copy; Stadt Bielefeld – bielefeldGEOCLIENT
+    </div>
+  </div>
+</div>
+
+<!-- ── Main app ───────────────────────────────────────────────────────────── -->
+<div id="app" class="hidden">
+
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('admin.static', filename='logo-header.svg') }}" alt="bielefeldGEOCLIENT">
+    </div>
+
+    <ul class="sidebar-nav">
+      <li id="nav-app" class="active">
+        <a href="#" onclick="return switchSection('app')">App-Konfigurationen</a>
+      </li>
+      <li id="nav-layers">
+        <a href="#" onclick="return switchSection('layers')">Layer-Konfigurationen</a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div>
+        <svg class="icon"><use href="#i-user"/></svg>Angemeldet als: Admin
+      </div>
+      <div>
+        <a href="/admin/projects">
+          <svg class="icon"><use href="#i-list"/></svg>Projektliste
+        </a>
+        <a href="#" id="logout-btn" class="pull-right">
+          <svg class="icon"><use href="#i-logout"/></svg>Abmelden
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="content">
+    <nav class="topbar">
+      <span class="topbar-title" id="section-title">App-Konfigurationen</span>
+      <form id="search-form" onsubmit="return false">
+        <div class="search-group">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input class="form-control" placeholder="Suche" id="search-input" oninput="renderTable()">
+        </div>
+      </form>
+    </nav>
+
+    <div class="content-body">
+
+      <!-- LIST VIEW -->
+      <div id="list-view">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th class="actions">
+                <button class="btn btn-default btn-xs" id="add-btn">
+                  <svg class="icon"><use href="#i-plus"/></svg>
+                  Konfiguration hinzufügen
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="file-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- EDIT VIEW -->
+      <div id="edit-view" class="hidden">
+        <div class="edit-form">
+          <h3 id="edit-title"></h3>
+          <div class="form-group">
+            <label>YAML</label>
+            <div id="editor-container"></div>
+          </div>
+          <div id="error-alert" class="alert alert-warning hidden">
+            <strong>Fehler:</strong> <span id="error-msg"></span>
+          </div>
+          <div class="button-bar">
+            <button type="button" class="btn btn-default btn-sm" id="back-btn">
+              <svg class="icon"><use href="#i-chevron-left"/></svg> Zurück
+            </button>
+            <button type="button" class="btn btn-success btn-sm" id="save-btn">
+              <svg class="icon"><use href="#i-save"/></svg> <span id="save-label">Speichern</span>
+            </button>
+          </div>
+          <div id="success-alert" class="alert alert-success hidden">
+            <svg class="icon"><use href="#i-check"/></svg> <span id="success-msg"></span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .content-body -->
+  </div><!-- #content -->
+</div><!-- #app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="{{ url_for('admin.static', filename='admin.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projektübersicht – bielefeldGEOCLIENT</title>
+  <link rel="stylesheet" href="{{ url_for('admin.static', filename='admin.css') }}">
+</head>
+<body class="standalone">
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-pencil" viewBox="0 0 16 16">
+    <path d="M12.1 1.5l2.4 2.4-1.5 1.5-2.4-2.4 1.5-1.5zM2 11.6l7.6-7.6 2.4 2.4L4.4 14H2v-2.4z"/>
+  </symbol>
+  <symbol id="i-marker" viewBox="0 0 16 16">
+    <path d="M8 1a5 5 0 0 0-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+  </symbol>
+  <symbol id="i-cog" viewBox="0 0 16 16">
+    <path d="M14 9V7l-1.8-.4a4.5 4.5 0 0 0-.5-1.2l1-1.5-1.4-1.4-1.5 1a4.5 4.5 0 0 0-1.2-.5L8.2 1H6.8l-.4 1.8a4.5 4.5 0 0 0-1.2.5l-1.5-1-1.4 1.4 1 1.5a4.5 4.5 0 0 0-.5 1.2L1 7v2l1.8.4c.1.4.3.8.5 1.2l-1 1.5 1.4 1.4 1.5-1c.4.2.8.4 1.2.5l.4 1.8h2l.4-1.8c.4-.1.8-.3 1.2-.5l1.5 1 1.4-1.4-1-1.5c.2-.4.4-.8.5-1.2L14 9zM7.5 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 16 16">
+    <path d="M7 1h2v7h2.5L8 11.5 4.5 8H7V1zM2 12h12v2H2v-2z"/>
+  </symbol>
+  <symbol id="i-upload" viewBox="0 0 16 16">
+    <path d="M8 1l3.5 3.5H9V11H7V4.5H4.5L8 1zM2 12h12v2H2v-2z"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16">
+    <path d="M6 2V1h4v1h4v2H2V2h4zM3 5h10l-.8 10H3.8L3 5zm3 2v6h1V7H6zm3 0v6h1V7H9z"/>
+  </symbol>
+</svg>
+
+<nav class="page-navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between">
+    <a href="/admin/">
+      <img src="{{ url_for('admin.static', filename='logo-header.svg') }}" alt="bielefeldGEOCLIENT">
+    </a>
+    <a href="/admin/" class="btn btn-default btn-sm">
+      <svg class="icon"><use href="#i-cog"/></svg> Admin-Oberfläche
+    </a>
+  </div>
+</nav>
+
+<div class="page-title">
+  <div class="container">
+    <h2>Projektübersicht</h2>
+  </div>
+</div>
+
+<div class="container page-content">
+  {% if projects %}
+    {% for project in projects %}
+    <div class="project-panel" data-project="{{ project }}">
+      <div class="panel-heading">
+        <h3>{{ project }}</h3>
+        <a href="/app/{{ project }}/" class="btn btn-success btn-sm">
+          <svg class="icon"><use href="#i-marker"/></svg> Karte öffnen
+        </a>
+        <a href="/admin/" class="btn btn-default btn-sm">
+          <svg class="icon"><use href="#i-pencil"/></svg> Konfiguration bearbeiten
+        </a>
+        <button type="button" class="btn btn-default btn-sm import-btn">
+          <svg class="icon"><use href="#i-upload"/></svg> Profil importieren
+        </button>
+      </div>
+      <div class="panel-body">
+        <ul class="profile-list"></ul>
+        <p class="no-profiles hidden">Keine gespeicherten Profile für dieses Projekt.</p>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Profiles whose project is not (or no longer) in the list above -->
+    <div class="project-panel hidden" id="orphan-panel" data-project="">
+      <div class="panel-heading">
+        <h3>Weitere Profile</h3>
+      </div>
+      <div class="panel-body">
+        <ul class="profile-list"></ul>
+      </div>
+    </div>
+  {% else %}
+  <p class="text-muted">Keine App-Konfigurationen gefunden.</p>
+  {% endif %}
+
+  <input type="file" id="import-input" accept=".json,application/json" class="hidden">
+
+  <div class="page-footer">
+    &copy; Stadt Bielefeld – bielefeldGEOCLIENT
+  </div>
+</div>
+
+<script>
+// Profiles are saved by the map app in localStorage (see src/lib/profiles.ts).
+// This page can read them because it is served from the same origin
+// (in dev via the Vite proxy at :5173/admin/..., in prod via nginx).
+var STORAGE_KEY = 'olkd_map_profiles';
+var importInput = document.getElementById('import-input');
+var importTargetProject = null;
+
+function loadProfiles() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveProfiles(profiles) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(iso) {
+  var d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function render() {
+  var profiles = loadProfiles();
+  var panels = document.querySelectorAll('.project-panel');
+  var knownProjects = [];
+  panels.forEach(function(panel) {
+    if (panel.dataset.project) knownProjects.push(panel.dataset.project);
+  });
+
+  panels.forEach(function(panel) {
+    var project = panel.dataset.project;
+    var list = panel.querySelector('.profile-list');
+    var empty = panel.querySelector('.no-profiles');
+    list.innerHTML = '';
+
+    var mine = profiles.filter(function(p) {
+      // Old profiles have no configId and are treated as belonging to 'default'.
+      var owner = p.configId || 'default';
+      if (project) return owner === project;
+      // Orphan panel: profiles whose project no longer exists
+      return knownProjects.indexOf(owner) === -1;
+    });
+
+    if (panel.id === 'orphan-panel') {
+      panel.classList.toggle('hidden', mine.length === 0);
+    }
+    if (empty) empty.classList.toggle('hidden', mine.length > 0);
+
+    mine.forEach(function(profile) {
+      var li = document.createElement('li');
+      var openUrl = '/app/' + encodeURIComponent(profile.configId || 'default') +
+                    '/?profile=' + encodeURIComponent(profile.name);
+      li.innerHTML =
+        '<span class="profile-name">' + escHtml(profile.name) + '</span>' +
+        '<span class="profile-date">' + escHtml(formatDate(profile.savedAt)) + '</span>' +
+        '<span>' +
+          '<a class="btn btn-success btn-xs" href="' + openUrl + '">' +
+            '<svg class="icon"><use href="#i-marker"/></svg> Öffnen</a>' +
+          '<button type="button" class="btn btn-default btn-xs export-profile">' +
+            '<svg class="icon"><use href="#i-download"/></svg> Exportieren</button>' +
+          '<button type="button" class="btn btn-danger btn-xs delete-profile">' +
+            '<svg class="icon"><use href="#i-trash"/></svg> Löschen</button>' +
+        '</span>';
+      li.querySelector('.export-profile').addEventListener('click', function() {
+        exportProfile(profile);
+      });
+      li.querySelector('.delete-profile').addEventListener('click', function() {
+        deleteProfile(profile.name);
+      });
+      list.appendChild(li);
+    });
+  });
+}
+
+function exportProfile(profile) {
+  var blob = new Blob([JSON.stringify(profile, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'profil-' + profile.name.replace(/[^\w\-]+/g, '_') + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function deleteProfile(name) {
+  if (!confirm('Profil "' + name + '" wirklich löschen?')) return;
+  saveProfiles(loadProfiles().filter(function(p) { return p.name !== name; }));
+  render();
+}
+
+document.querySelectorAll('.import-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    importTargetProject = btn.closest('.project-panel').dataset.project;
+    importInput.value = '';
+    importInput.click();
+  });
+});
+
+importInput.addEventListener('change', function() {
+  var file = importInput.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function() {
+    var imported;
+    try {
+      imported = JSON.parse(reader.result);
+    } catch (e) {
+      alert('Ungültige Datei: kein JSON.');
+      return;
+    }
+    var list = Array.isArray(imported) ? imported : [imported];
+    var profiles = loadProfiles();
+    var count = 0;
+
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      if (!p || typeof p.name !== 'string' || !Array.isArray(p.center) ||
+          typeof p.zoom !== 'number' || !Array.isArray(p.visibleLayers)) {
+        alert('Ungültige Datei: kein Kartenprofil.');
+        return;
+      }
+      p.configId = importTargetProject;
+
+      var existing = profiles.findIndex(function(q) { return q.name === p.name; });
+      if (existing >= 0) {
+        if (!confirm('Profil "' + p.name + '" existiert bereits. Überschreiben?')) continue;
+        profiles[existing] = p;
+      } else {
+        profiles.unshift(p);
+      }
+      count++;
+    }
+
+    if (count > 0) {
+      saveProfiles(profiles);
+      render();
+    }
+  };
+  reader.readAsText(file);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -10,10 +10,12 @@ services:
     expose:
       - "8080"
     volumes:
-      # Mount configs for easy updates without rebuild
-      - ./backend/configs:/app/configs:ro
+      # Mount configs for easy updates without rebuild; writable for admin YAML editor
+      - ./backend/configs:/app/configs
     environment:
       - FLASK_ENV=production
+      - ADMIN_TOKEN=  # set a strong random token before deploying
+      - PROXY_HASH_SALT=  # set a stable secret before deploying
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s

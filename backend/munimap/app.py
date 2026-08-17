@@ -1,7 +1,5 @@
-# Minimal Flask application for OLKD_Svelte
-# Phase 1: Configuration API + WMS Proxy
-
 import os
+import time
 import yaml
 import logging
 import requests
@@ -12,10 +10,38 @@ from munimap.layers import load_layers_config, create_anol_layers
 from munimap.app_layers_def import prepare_layers_def, prepare_catalog_names, prepare_catalog_group_def
 from munimap.export import export_bp
 from munimap.munimap_transport.views import transport_api
+from munimap.admin.views import admin_bp
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('munimap')
+
+_RELOAD_FLAG = '.admin_reload'
+
+
+def _load_layers(app):
+    """Load (or reload) layers config into app context. Called at startup and by the admin reload endpoint."""
+    layers_conf_dir = app.config['LAYERS_CONF_DIR']
+    if not os.path.exists(layers_conf_dir):
+        log.warning(f'Layers config directory not found: {layers_conf_dir}')
+        app.layers_config = {'backgrounds': [], 'groups': [], 'layers': {}, 'hash_map': {}}
+        app.anol_layers = {'backgroundLayer': [], 'overlays': []}
+        app.layers_last_loaded = time.time()
+        return
+    try:
+        layers_config = load_layers_config(
+            layers_conf_dir,
+            proxy_hash_salt=app.config.get('PROXY_HASH_SALT', '')
+        )
+        app.layers_config = layers_config
+        app.anol_layers = create_anol_layers(layers_config)
+        app.layers_last_loaded = time.time()
+        log.info(f"Loaded {len(layers_config['layers'])} layers from {layers_conf_dir}")
+    except Exception as e:
+        log.error(f'Failed to load layers config: {e}')
+        app.layers_config = {'backgrounds': [], 'groups': [], 'layers': {}, 'hash_map': {}}
+        app.anol_layers = {'backgroundLayer': [], 'overlays': []}
+        app.layers_last_loaded = time.time()
 
 
 def load_app_config(config_name=None, config_dir='configs/app_configs'):
@@ -60,13 +86,15 @@ def create_app(config_path=None):
     # Register blueprints
     app.register_blueprint(export_bp)
     app.register_blueprint(transport_api)
+    app.register_blueprint(admin_bp)
 
     # Configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     app.config['LAYERS_CONF_DIR'] = os.path.join(base_dir, 'configs', 'layers_conf')
     app.config['APP_CONFIG_DIR'] = os.path.join(base_dir, 'configs', 'app_configs')
     app.config['STATIC_GEOJSON_DIR'] = os.path.join(base_dir, 'configs', 'static_geojson')
-    app.config['PROXY_HASH_SALT'] = 'olkd-svelte-dev'
+    app.config['PROXY_HASH_SALT'] = os.environ.get('PROXY_HASH_SALT', 'olkd-svelte-dev')
+    app.config['ADMIN_TOKEN'] = os.environ.get('ADMIN_TOKEN', '')
 
     # Transport / ÖPNV configuration (override via environment variables in production)
     app.config['SQLALCHEMY_LAYER_DATABASE_URI'] = os.environ.get('SQLALCHEMY_LAYER_DATABASE_URI', '')
@@ -77,25 +105,23 @@ def create_app(config_path=None):
     app.config['TIMETABLE_NIGHTLINE_DOCUMENTS_BASE_URL'] = os.environ.get('TIMETABLE_NIGHTLINE_DOCUMENTS_BASE_URL', '')
     app.config['TIMETABLE_CACHE_DIR'] = os.environ.get('TIMETABLE_CACHE_DIR', '/tmp')
 
+    if not app.config['ADMIN_TOKEN']:
+        log.warning('ADMIN_TOKEN is not set — admin interface is unprotected')
+
     # Load layers configuration on startup
-    layers_conf_dir = app.config['LAYERS_CONF_DIR']
-    if os.path.exists(layers_conf_dir):
-        try:
-            layers_config = load_layers_config(
-                layers_conf_dir,
-                proxy_hash_salt=app.config['PROXY_HASH_SALT']
-            )
-            app.layers_config = layers_config
-            app.anol_layers = create_anol_layers(layers_config)
-            log.info(f"Loaded {len(layers_config['layers'])} layers from {layers_conf_dir}")
-        except Exception as e:
-            log.error(f"Failed to load layers config: {e}")
-            app.layers_config = {'backgrounds': [], 'groups': [], 'layers': {}, 'hash_map': {}}
-            app.anol_layers = {'backgroundLayer': [], 'overlays': []}
-    else:
-        log.warning(f"Layers config directory not found: {layers_conf_dir}")
-        app.layers_config = {'backgrounds': [], 'groups': [], 'layers': {}, 'hash_map': {}}
-        app.anol_layers = {'backgroundLayer': [], 'overlays': []}
+    _load_layers(app)
+
+    # Auto-reload layers when the admin touches the reload flag file.
+    # Each gunicorn worker independently detects the flag on the next request.
+    @app.before_request
+    def auto_reload_layers():
+        flag = os.path.join(app.config['LAYERS_CONF_DIR'], _RELOAD_FLAG)
+        if os.path.exists(flag):
+            try:
+                if os.path.getmtime(flag) > getattr(app, 'layers_last_loaded', 0):
+                    _load_layers(app)
+            except OSError:
+                pass
 
     # API Routes
     @app.route('/api/v1/app/<config>/config')

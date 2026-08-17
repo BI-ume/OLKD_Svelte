@@ -29,6 +29,10 @@ export default defineConfig({
 			'/export': {
 				target: backendUrl,
 				changeOrigin: true
+			},
+			'/admin': {
+				target: backendUrl,
+				changeOrigin: true
 			}
 		}
 	}

@@ -193,6 +193,7 @@ export interface ComponentsConfig {
 	scaleLine?: boolean;
 	overviewmap?: boolean;
 	layerswitcher?: boolean;
+	backgroundSelection?: boolean;
 	sidebar?: boolean;
 	catalog?: boolean;
 	searchCatalog?: boolean;
@@ -269,6 +270,7 @@ export interface AppHeaderConfig {
 	tour?: string;
 	tooltipDelay?: number;
 	showNoBackground?: boolean;
+	showLogin?: boolean;
 }
 
 // Full application configuration

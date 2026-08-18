@@ -4,6 +4,7 @@
 	import { sidebarStore, sidebarIsOpen, sidebarShowCatalog, sidebarShowPrint, sidebarShowDraw } from '$lib/stores/sidebarStore';
 	import { configStore, componentsConfig } from '$lib/stores/configStore';
 	import { helpStore } from '$lib/stores/helpStore';
+	import { authStore, isLoggedIn, userName } from '$lib/stores/authStore';
 	import { SearchBox } from '$lib/components/controls';
 	import BackgroundSelection from './BackgroundSelection.svelte';
 	import OverlaySelection from './OverlaySelection.svelte';
@@ -18,6 +19,7 @@
 	let showPrintButton = $derived($configStore.app?.components?.print !== false);
 	let showDrawButton = $derived($configStore.app?.components?.draw !== false);
 	let showHelp = $derived($configStore.app?.components?.helpTour !== false);
+	let showLogin = $derived($configStore.app?.app?.showLogin !== false);
 	let showSecondary = $derived($sidebarShowCatalog || $sidebarShowPrint || $sidebarShowDraw);
 
 	// Header
@@ -43,10 +45,25 @@
 		sidebarStore.showDraw();
 	}
 
+	function handleLogout() {
+		authStore.logout();
+	}
+
 	// Initialize from config
 	onMount(() => {
 		const defaultOpen = $configStore.app?.sidebar?.defaultOpen ?? true;
 		sidebarStore.initialize(defaultOpen);
+
+		// Re-read the admin token when arriving and when the tab regains focus
+		// (e.g. returning from the admin login in the same tab).
+		authStore.refresh();
+		const refresh = () => authStore.refresh();
+		window.addEventListener('focus', refresh);
+		window.addEventListener('pageshow', refresh);
+		return () => {
+			window.removeEventListener('focus', refresh);
+			window.removeEventListener('pageshow', refresh);
+		};
 	});
 </script>
 
@@ -124,14 +141,32 @@
 						</svg>
 					</a>
 				</div>
-				<button class="login-btn" disabled title="Login (in Entwicklung)">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-						<polyline points="10 17 15 12 10 7"></polyline>
-						<line x1="15" y1="12" x2="3" y2="12"></line>
-					</svg>
-					Login
-				</button>
+				{#if showLogin}
+					{#if $isLoggedIn}
+						<div class="login-status">
+							<span class="login-user">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+									<circle cx="12" cy="7" r="4"></circle>
+								</svg>
+								Angemeldet als: {$userName}
+							</span>
+							<div class="login-actions">
+								<button type="button" class="logout-link" onclick={handleLogout}>Abmelden</button>
+								<a href="/admin/projects">Projektliste</a>
+							</div>
+						</div>
+					{:else}
+						<a href="/admin/" class="login-btn">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+								<polyline points="10 17 15 12 10 7"></polyline>
+								<line x1="15" y1="12" x2="3" y2="12"></line>
+							</svg>
+							Login
+						</a>
+					{/if}
+				{/if}
 			</div>
 		</div>
 
@@ -413,30 +448,70 @@
 		justify-content: center;
 		gap: 8px;
 		padding: 8px 16px;
-		background: #f0f0f0;
-		border: 1px solid #ccc;
+		background: #fff;
+		border: 1px solid #b0b0b0;
 		border-radius: 4px;
 		font-size: 13px;
-		color: #666;
-		cursor: not-allowed;
-		opacity: 0.6;
+		color: #333;
+		text-decoration: none;
+		cursor: pointer;
 		transition:
 			background-color 0.15s,
-			opacity 0.15s;
+			border-color 0.15s;
 	}
 
-	.login-btn:not(:disabled) {
-		cursor: pointer;
-		opacity: 1;
-	}
-
-	.login-btn:not(:disabled):hover {
-		background: #e8e8e8;
+	.login-btn:hover {
+		background: #f5f5f5;
+		border-color: #777;
+		text-decoration: none;
 	}
 
 	.login-btn svg {
 		width: 16px;
 		height: 16px;
+	}
+
+	.login-status {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		font-size: 12px;
+	}
+
+	.login-user {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.login-user svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+
+	.login-actions {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.login-actions a,
+	.logout-link {
+		font-size: 12px;
+		color: #1976d2;
+		text-decoration: none;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		transition: color 0.15s;
+	}
+
+	.login-actions a:hover,
+	.logout-link:hover {
+		color: #e2001a;
+		text-decoration: underline;
 	}
 
 	/* Secondary panels: auto-height, slide from right */

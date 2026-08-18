@@ -3,7 +3,7 @@ app:
     headerLogoLink: 'https://bielefeld01.de/geo/portal/onlinekarten.php'
     tooltipDelay: 50
     showNoBackground: false
-    showLogin: false
+    showLogin: true
     hideMetadata: true
     sidebar:
         defaultOpen: true

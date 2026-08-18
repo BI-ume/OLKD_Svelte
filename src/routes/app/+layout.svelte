@@ -6,6 +6,8 @@
 	import { sidebarStore, sidebarIsOpen } from '$lib/stores/sidebarStore';
 	import { initializeLayers } from '$lib/layers';
 	import { applyUrlLayerState, parseUrlGroups } from '$lib/utils/urlParams';
+	import { loadProfiles, applyProfile } from '$lib/profiles';
+	import { mapReady } from '$lib/stores/mapStore';
 	import { Map } from '$lib/components/map';
 	import { Sidebar } from '$lib/components/sidebar';
 	import {
@@ -61,6 +63,25 @@
 				urlMapState = applyUrlLayerState();
 
 				initialized = true;
+
+				// Apply a saved profile requested via ?profile=<name>
+				// (e.g. from the admin projects page) once the map is ready
+				const profileName = new URLSearchParams(window.location.search).get('profile');
+				if (profileName) {
+					const profile = loadProfiles().find((p) => p.name === profileName);
+					if (profile) {
+						let applied = false;
+						const unsubscribe = mapReady.subscribe((ready) => {
+							if (ready && !applied) {
+								applied = true;
+								applyProfile(profile);
+								queueMicrotask(() => unsubscribe());
+							}
+						});
+					} else {
+						console.warn(`Profil "${profileName}" nicht gefunden`);
+					}
+				}
 
 				if ($componentsConfig?.helpTour !== false && !helpStore.hasBeenSeen()) {
 					sidebarStore.open();

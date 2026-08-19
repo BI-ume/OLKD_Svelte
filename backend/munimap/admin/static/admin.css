@@ -247,7 +247,10 @@ label { display: inline-block; margin-bottom: 5px; font-weight: 700; }
   border-bottom: 1px solid #ddd;
   padding: 5px 0;
 }
-.page-navbar img { height: 50px; }
+.page-navbar img {
+  height: 100px;
+  margin: 10px 0;
+}
 
 .page-title {
   background: var(--color-bg-muted);
@@ -272,12 +275,40 @@ label { display: inline-block; margin-bottom: 5px; font-weight: 700; }
 .login-form { max-width: 420px; }
 .login-error { color: var(--color-danger); margin-top: 10px; min-height: 20px; }
 
+.no-access {
+  max-width: 420px;
+  margin-top: 32px;
+  color: var(--color-text-muted);
+}
+.no-access p { margin: 0 0 8px; }
+.no-access p:last-child { margin-bottom: 0; }
+
 .page-footer {
   margin-top: 40px; padding: 16px 0;
   border-top: 1px solid var(--color-bg-item);
   color: var(--color-text-light);
   font-size: 12px;
   text-align: center;
+}
+
+/* Footer with links (projects page): copyright left, links right */
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+.site-footer .footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
 }
 
 /* ── Project panels with nested profile lists ── */
@@ -299,6 +330,36 @@ label { display: inline-block; margin-bottom: 5px; font-weight: 700; }
   font-size: 18px;
 }
 .project-panel .panel-body { padding: 10px 15px; }
+
+/* Accordion: heading toggles its profile list */
+.panel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.panel-toggle .chevron {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform 0.15s;
+}
+.project-panel:not(.collapsed) .panel-toggle .chevron { transform: rotate(90deg); }
+
+.profile-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.project-panel.collapsed .panel-body { display: none; }
+.project-panel.collapsed .panel-heading { border-bottom: 0; }
 
 .profile-list { list-style: none; margin: 0; padding: 0; }
 .profile-list li {

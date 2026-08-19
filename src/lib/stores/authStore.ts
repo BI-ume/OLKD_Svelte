@@ -39,6 +39,28 @@ function createAuthStore() {
 			set({ token: readToken() });
 		},
 
+		/**
+		 * Verify a token against the backend and store it on success.
+		 * Returns true when the token was accepted.
+		 */
+		async login(token: string): Promise<boolean> {
+			const res = await fetch('/admin/api/verify', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			if (!res.ok) return false;
+
+			if (typeof sessionStorage !== 'undefined') {
+				try {
+					sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+				} catch {
+					/* ignore */
+				}
+			}
+			set({ token });
+			return true;
+		},
+
 		logout() {
 			if (typeof sessionStorage !== 'undefined') {
 				try {

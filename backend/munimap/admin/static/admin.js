@@ -52,7 +52,7 @@ async function apiFetch(url, opts) {
 // ── Boot ──────────────────────────────────────────────────────────────────
 async function init() {
   if (!token) { showLogin(); return; }
-  var res = await apiFetch('/admin/api/configs/app');
+  var res = await apiFetch('/admin/api/verify', { method: 'POST' });
   if (!res) return;
   showApp();
   await loadSection('app');
@@ -82,7 +82,8 @@ loginForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   var t = tokenInput.value.trim();
   if (!t) return;
-  var res = await fetch('/admin/api/configs/app', {
+  var res = await fetch('/admin/api/verify', {
+    method: 'POST',
     headers: { 'Authorization': 'Bearer ' + t }
   });
   if (res.status === 401) {

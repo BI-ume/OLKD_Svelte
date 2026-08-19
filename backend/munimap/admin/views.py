@@ -89,6 +89,16 @@ def projects():
     return render_template('admin_projects.html', projects=names)
 
 
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+@admin_bp.post('/api/verify')
+def verify_token():
+    """Validate the admin token without returning any data."""
+    if not _check_auth():
+        return _unauthorized()
+    return jsonify({'ok': True})
+
+
 # ── App-configs CRUD ──────────────────────────────────────────────────────────
 
 @admin_bp.get('/api/configs/app')

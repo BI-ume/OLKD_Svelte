@@ -149,10 +149,10 @@ def anol_overlay_layer(layer_conf):
         source = {
             'url': layer_conf['source']['url'],
             'urlParameters': {
-                'filter': layer_conf['source']['urlParameters']['filter'],
-                'expand': layer_conf['source']['urlParameters']['expand']
+                'filter': layer_conf['source']['urlParameters'].get('filter'),
+                'expand': layer_conf['source']['urlParameters'].get('expand')
             },
-            'refreshInterval': layer_conf['source']['refreshInterval']
+            'refreshInterval': layer_conf['source'].get('refreshInterval')
         }
         if layer_conf.get('source', {}).get('directAccess'):
             source['layer'] = layer_conf['source'].get('layer')

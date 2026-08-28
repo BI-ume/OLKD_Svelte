@@ -10,6 +10,8 @@
 	import { configStore } from '$lib/stores/configStore';
 	import { TiledWMS } from '$lib/layers/TiledWMS';
 	import { SingleTileWMS } from '$lib/layers/SingleTileWMS';
+	import { SensorThings } from '$lib/layers/SensorThings';
+	import { StaticGeoJSON } from '$lib/layers/StaticGeoJSON';
 	import { WMSGetFeatureInfo } from 'ol/format';
 	import { Vector as VectorSource } from 'ol/source';
 	import { Vector as VectorLayer } from 'ol/layer';
@@ -137,7 +139,15 @@
 			return true;
 		});
 
-		if (feInfoLayers.length === 0) return;
+		// Vector layers answer from the features already drawn, with no request
+		const vectorLayers = allLayers.filter(
+			(layer): layer is (SensorThings | StaticGeoJSON) & { featureinfo: FeatureInfoConfig } => {
+				if (!layer.visible || !layer.featureinfo) return false;
+				return layer instanceof SensorThings || layer instanceof StaticGeoJSON;
+			}
+		);
+
+		if (feInfoLayers.length === 0 && vectorLayers.length === 0) return;
 
 		// Split into HTML and GML layers
 		const htmlLayers = feInfoLayers.filter(l => l.featureinfo.catalog !== true && l.featureinfo.gml !== true);
@@ -255,6 +265,17 @@
 				}
 			}
 
+			// Vector features are already on the map; hit-test them directly
+			for (const layer of vectorLayers) {
+				const html = vectorFeatureInfo(layer, evt.pixel);
+				if (!html) continue;
+				hasResults = true;
+				const div = document.createElement('div');
+				div.className = 'featureinfo-vector';
+				div.innerHTML = html;
+				popupContentEl.appendChild(div);
+			}
+
 			if (!hasResults) {
 				closePopup();
 			}
@@ -263,6 +284,55 @@
 			isLoading = false;
 			closePopup();
 		}
+	}
+
+	/**
+	 * Feature info for a vector layer. The features are already drawn, so this is
+	 * a hit test rather than a request.
+	 *
+	 * Which properties to show comes from `featureinfo.properties`; without it
+	 * every property is listed. Keys address the flattened property names, so a
+	 * SensorThings reading is `Observations.0.result`.
+	 */
+	function vectorFeatureInfo(
+		layer: (SensorThings | StaticGeoJSON) & { featureinfo: FeatureInfoConfig },
+		pixel: number[]
+	): string | null {
+		if (!map) return null;
+		const olLayer = layer.olLayer;
+		const features = map.getFeaturesAtPixel(pixel, {
+			layerFilter: (candidate) => candidate === olLayer,
+			hitTolerance: 5
+		});
+		if (features.length === 0) return null;
+
+		const limit = layer.featureinfo.featureCount ?? 1;
+		const rows: string[] = [];
+
+		for (const feature of features.slice(0, limit)) {
+			const properties = feature.getProperties();
+			const wanted = layer.featureinfo.properties;
+			const entries = wanted
+				? wanted.map((p) => (typeof p === 'string' ? { key: p, label: p } : { key: p.key, label: p.label ?? p.key }))
+				: Object.keys(properties)
+						.filter((key) => properties[key] !== feature.getGeometry())
+						.map((key) => ({ key, label: key }));
+
+			const cells = entries
+				.map(({ key, label }) => {
+					const value = properties[key];
+					if (value === undefined || value === null || value === '') return null;
+					return `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(String(value))}</td></tr>`;
+				})
+				.filter((cell): cell is string => cell !== null);
+
+			if (cells.length > 0) {
+				rows.push(`<table>${cells.join('')}</table>`);
+			}
+		}
+
+		if (rows.length === 0) return null;
+		return `<h4>${escapeHtml(layer.title)}</h4>${rows.join('')}`;
 	}
 
 	interface HtmlResult {
@@ -538,5 +608,36 @@
 
 	:global(.featureinfo-catalog a:hover) {
 		text-decoration: underline;
+	}
+
+	/* Vector feature properties */
+	:global(.featureinfo-vector) {
+		padding: 4px 0;
+		font-size: 13px;
+	}
+
+	:global(.featureinfo-vector h4) {
+		margin: 0 0 4px;
+		font-size: 13px;
+		font-weight: bold;
+	}
+
+	:global(.featureinfo-vector table) {
+		border-collapse: collapse;
+		margin-bottom: 6px;
+	}
+
+	:global(.featureinfo-vector th) {
+		text-align: left;
+		font-weight: normal;
+		color: #666;
+		padding: 1px 8px 1px 0;
+		vertical-align: top;
+		white-space: nowrap;
+	}
+
+	:global(.featureinfo-vector td) {
+		padding: 1px 0;
+		vertical-align: top;
 	}
 </style>

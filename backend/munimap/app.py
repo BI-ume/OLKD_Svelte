@@ -191,6 +191,44 @@ def create_app(config_path=None):
             log.error(f"Proxy error for {target_url}: {e}")
             return jsonify({'error': 'Proxy request failed'}), 502
 
+    @app.route('/proxy/sensorthings/<hash>/<layer_name>')
+    @app.route('/proxy/sensorthings/<hash>/<layer_name>/<api_version>/<root>')
+    def proxy_sensorthings(hash, layer_name, api_version='v1.1', root='Datastreams'):
+        """Proxy SensorThings requests to hide actual service URLs.
+
+        Unlike the WMS proxy this addresses a collection: the client appends
+        /<api_version>/<root> for both Datastreams (the features) and
+        Observations (which times carry data).
+        """
+        hash_map = app.layers_config.get('hash_map', {})
+
+        if hash not in hash_map:
+            log.warning(f"Unknown proxy hash: {hash}")
+            return jsonify({'error': 'Unknown service'}), 404
+
+        layer = app.layers_config.get('layers', {}).get(layer_name)
+        if layer is None or layer.get('hash') != hash:
+            log.warning(f"SensorThings proxy: layer '{layer_name}' does not match hash")
+            return jsonify({'error': 'Unknown layer'}), 404
+
+        base_url = hash_map[hash].rstrip('/')
+        target_url = f'{base_url}/{api_version}/{root}'
+
+        try:
+            resp = requests.get(target_url, params=dict(request.args), timeout=30)
+        except requests.RequestException as e:
+            log.error(f"Proxy error for {target_url}: {e}")
+            return jsonify({'error': 'Proxy request failed'}), 502
+
+        if not resp.ok:
+            log.error(f"SensorThings request failed with {resp.status_code}: {target_url}")
+            return jsonify({'error': 'Upstream request failed'}), 502
+
+        response = Response(resp.content, status=resp.status_code)
+        response.content_type = resp.headers.get('content-type', 'application/json')
+        response.headers['Cache-Control'] = 'private'
+        return response
+
     @app.route('/api/v1/app/<config>/catalog')
     @app.route('/api/v1/app/catalog')
     def get_catalog(config=None):

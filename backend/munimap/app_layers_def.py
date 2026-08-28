@@ -91,7 +91,14 @@ def prepare_group_layers(app_config, group_layers, group_active, layers_config):
         # Set URL from config
         layer_conf = layers_config.get(layer_name, {})
         if layer_conf.get('hash'):
-            layer['olLayer']['source']['url'] = f"/proxy/wms/{layer_conf['hash']}/service"
+            if layer['type'] == 'sensorthings':
+                # The SensorThings client appends /v<version>/<collection>
+                # itself, so it gets the bare endpoint rather than a service url
+                layer['olLayer']['source']['url'] = (
+                    f"/proxy/sensorthings/{layer_conf['hash']}/{layer_name}"
+                )
+            else:
+                layer['olLayer']['source']['url'] = f"/proxy/wms/{layer_conf['hash']}/service"
         elif layer_conf.get('url'):
             layer['olLayer']['source']['url'] = layer_conf['url']
         elif 'url' in layer_conf.get('source', {}):

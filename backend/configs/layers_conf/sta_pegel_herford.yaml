@@ -1,0 +1,47 @@
+meta:
+  description: 'SensorThings Flusspegel (Entwicklungs-Testlayer, Kreis Herford)'
+
+groups:
+  - name: sta_pegel
+    title: 'Flusspegel (SensorThings)'
+    showGroup: false
+    status: active
+    catalog: true
+    layers:
+      - pegel_sta
+
+layers:
+  - name: pegel_sta
+    title: 'Flusspegel (STA)'
+    type: sensorthings
+    status: active
+    catalog: true
+    attribution: 'Pegeldaten © Kreis Herford'
+    source:
+      url: 'https://geoportal.kreis-herford.de/iot'
+      urlParameters:
+        filter: "substringof('Flusspegel', name)"
+        expand: 'Thing/Locations,Observations($orderby=phenomenonTime desc;$top=1)'
+      refreshInterval: 30
+    style:
+      - style:
+          # circle-radius: 6
+          # circle-fill-color: '#337ab7'
+          # circle-stroke-color: '#ffffff'
+          # circle-stroke-width: 2
+          text-value: ['case', ['has', 'Observations.0.result'], ['to-string', ['get', 'Observations.0.result']], 'no data']
+          text-scale: [1.7,1.7]
+          text-stroke-color: [0,0,0]
+          text-stroke-width: 0.5
+          text-padding: [5,0,0,5]
+    featureinfo:
+      target: _popup
+      properties:
+        - key: 'name'
+          label: 'Datenstrom'
+        - key: 'Observations.0.result'
+          label: 'Messwert'
+        - key: 'unitOfMeasurement.symbol'
+          label: 'Einheit'
+        - key: 'Observations.0.phenomenonTime'
+          label: 'Zeitpunkt'

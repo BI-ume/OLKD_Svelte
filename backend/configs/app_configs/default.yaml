@@ -48,6 +48,7 @@ layers:
         - bielefeldkarte_2021_r
         - bodenrichtwerte_2023_t
         - luftbilder_2020_to
+        - sta_pegel
 
 components:
     search: true

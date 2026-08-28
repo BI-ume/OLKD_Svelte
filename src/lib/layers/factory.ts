@@ -5,6 +5,7 @@ import { TiledWMS } from './TiledWMS';
 import { SingleTileWMS } from './SingleTileWMS';
 import { WMTS } from './WMTS';
 import { StaticGeoJSON } from './StaticGeoJSON';
+import { SensorThings } from './SensorThings';
 
 /**
  * Create a Layer instance from configuration
@@ -37,9 +38,7 @@ export function createLayer(config: LayerConfig): Layer | null {
 				return new StaticGeoJSON(config);
 
 			case 'sensorthings':
-				// SensorThings API - not implemented yet
-				console.warn(`SensorThings layer type not yet implemented: ${config.name}`);
-				return null;
+				return new SensorThings(config);
 
 			default:
 				console.warn(`Unknown layer type: ${config.type} for layer ${config.name}`);
@@ -93,3 +92,4 @@ export { TiledWMS } from './TiledWMS';
 export { SingleTileWMS } from './SingleTileWMS';
 export { WMTS } from './WMTS';
 export { StaticGeoJSON } from './StaticGeoJSON';
+export { SensorThings } from './SensorThings';

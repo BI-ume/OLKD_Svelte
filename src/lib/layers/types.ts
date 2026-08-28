@@ -84,7 +84,12 @@ export interface FeatureInfoConfig {
 		strokeColor?: string;
 		fillColor?: string;
 	};
-	properties?: Record<string, unknown>;
+	/**
+	 * Properties to show for a vector feature, as plain keys or `{key, label}`
+	 * pairs. Keys address the flattened feature properties, e.g.
+	 * `Observations.0.result` for a SensorThings reading.
+	 */
+	properties?: (string | { key: string; label?: string })[];
 	catalogGroup?: string;
 }
 
@@ -95,8 +100,13 @@ export interface SearchConfig {
 	params?: Record<string, string>;
 }
 
-// Style configuration for vector layers
-export interface StyleConfig {
+// Style configuration for vector layers.
+//
+// Two formats reach the frontend. postgis, digitize and geojson layers use the
+// simple properties below; sensorthings layers use OpenLayers flat styles,
+// which are a flat record of hyphenated keys or an array of rules and are
+// passed through to `setStyle()` unchanged.
+export interface SimpleStyleConfig {
 	fillColor?: string;
 	strokeColor?: string;
 	strokeWidth?: number;
@@ -105,6 +115,8 @@ export interface StyleConfig {
 	graphicWidth?: number;
 	graphicHeight?: number;
 }
+
+export type StyleConfig = SimpleStyleConfig | Record<string, unknown> | Record<string, unknown>[];
 
 // Layer types supported by the application
 export type LayerType =
@@ -250,7 +262,7 @@ export interface PrintConfig {
 export interface GeolocationConfig {
 	tracking?: boolean;
 	zoom?: number;
-	style?: StyleConfig;
+	style?: SimpleStyleConfig;
 }
 
 // Search provider configuration

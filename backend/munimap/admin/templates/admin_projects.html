@@ -272,8 +272,11 @@ importInput.addEventListener('change', function() {
 
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
-      if (!p || typeof p.name !== 'string' || !Array.isArray(p.center) ||
-          typeof p.zoom !== 'number' || !Array.isArray(p.visibleLayers)) {
+      // The map state lives under `map`, shaped like the URL's — see
+      // src/lib/mapState.ts
+      if (!p || typeof p.name !== 'string' || !p.map ||
+          !Array.isArray(p.map.center) || typeof p.map.zoom !== 'number' ||
+          !Array.isArray(p.map.groups)) {
         alert('Ungültige Datei: kein Kartenprofil.');
         return;
       }

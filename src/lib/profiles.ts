@@ -6,16 +6,11 @@
  * the ?profile=<name> URL parameter).
  */
 import { get } from 'svelte/store';
-import { mapStore } from '$lib/stores/mapStore';
-import {
-	layerStore,
-	activeBackground,
-	visibleOverlayLayers,
-	overlayGroups
-} from '$lib/stores/layerStore';
+import { layerStore, overlayGroups } from '$lib/stores/layerStore';
 import { configStore } from '$lib/stores/configStore';
 import { drawStore } from '$lib/stores/drawStore';
 import { createGroup } from '$lib/layers/factory';
+import { getMapState, applyMapState, type MapState } from '$lib/mapState';
 import type { GroupConfig } from '$lib/layers/types';
 
 export interface SavedProfile {
@@ -23,11 +18,12 @@ export interface SavedProfile {
 	savedAt: string;
 	/** Project (app config) the profile was saved in; older profiles lack it */
 	configId?: string;
-	center: [number, number];
-	zoom: number;
-	activeBackground: string | null;
-	visibleLayers: { name: string; opacity: number }[];
-	groupOrder?: string[];
+	/**
+	 * The shared map state, identical to what the URL encodes. Keeping it in
+	 * one place means anything added to `MapState` is carried by both without
+	 * a second implementation here.
+	 */
+	map: MapState;
 	drawFeatures?: string; // GeoJSON FeatureCollection string
 }
 
@@ -54,27 +50,10 @@ export function saveProfiles(profiles: SavedProfile[]): void {
 }
 
 export function getCurrentState(): Omit<SavedProfile, 'name' | 'savedAt'> {
-	const view = mapStore.getView();
-	const center = (view?.getCenter() as [number, number]) || [0, 0];
-	const zoom = view?.getZoom() || 0;
-
-	const bg = get(activeBackground);
-	const overlays = get(visibleOverlayLayers);
-	const groups = get(overlayGroups);
-
-	const drawFeatures = drawStore.exportGeoJSON() || undefined;
-
 	return {
 		configId: get(configStore).configId || 'default',
-		center,
-		zoom,
-		activeBackground: bg?.name || null,
-		visibleLayers: overlays.map((layer) => ({
-			name: layer.name,
-			opacity: layer.opacity
-		})),
-		groupOrder: groups.map((g) => g.name),
-		drawFeatures
+		map: getMapState(),
+		drawFeatures: drawStore.exportGeoJSON() || undefined
 	};
 }
 
@@ -111,60 +90,34 @@ async function fetchAndAddGroup(groupName: string): Promise<boolean> {
  * layer visibility/opacity, draw features). Requires the map to be ready.
  */
 export async function applyProfile(profile: SavedProfile): Promise<void> {
-	const view = mapStore.getView();
-	if (!view) return;
-
-	// Restore map view
-	view.setCenter(profile.center);
-	view.setZoom(profile.zoom);
-
-	// Restore active background
-	if (profile.activeBackground) {
-		layerStore.setActiveBackgroundByName(profile.activeBackground);
+	const state = profile.map;
+	if (!state) {
+		console.warn(`Profile "${profile.name}" has no map state — skipping`);
+		return;
 	}
 
-	// Restore layerswitcher groups if available
-	if (profile.groupOrder && profile.groupOrder.length > 0) {
-		const savedGroupNames = new Set(profile.groupOrder);
+	// Groups the profile expects but that are not on the map have to be fetched
+	// from the catalog first; applyMapState() only touches groups that exist.
+	if (state.groups && state.groups.length > 0) {
+		const savedGroupNames = new Set(state.groups.map((g) => g.name));
 		const currentGroups = get(overlayGroups);
 		const currentGroupNames = new Set(currentGroups.map((g) => g.name));
 
-		// Remove groups that are not in the saved profile
 		for (const group of currentGroups) {
 			if (!savedGroupNames.has(group.name)) {
 				layerStore.removeGroup(group.name);
 			}
 		}
 
-		// Add groups that are in the saved profile but not currently present
-		for (const groupName of profile.groupOrder) {
-			if (!currentGroupNames.has(groupName)) {
-				await fetchAndAddGroup(groupName);
+		for (const groupState of state.groups) {
+			if (!currentGroupNames.has(groupState.name)) {
+				await fetchAndAddGroup(groupState.name);
 			}
 		}
-
-		// Reorder groups to match saved order
-		layerStore.reorderGroups(profile.groupOrder);
 	}
 
-	// Hide all overlays first
-	const allLayers = layerStore.getAllLayers();
-	allLayers.forEach((layer) => {
-		if (!layer.isBackground) {
-			layerStore.setLayerVisibility(layer.name, false);
-		}
-	});
+	applyMapState(state);
 
-	// Restore visible layers with opacity
-	profile.visibleLayers.forEach(({ name, opacity }) => {
-		const layer = layerStore.getLayerByName(name);
-		if (layer) {
-			layerStore.setLayerVisibility(name, true);
-			layerStore.setLayerOpacity(name, opacity);
-		}
-	});
-
-	// Restore draw features
 	if (profile.drawFeatures) {
 		drawStore.clearAll();
 		drawStore.importGeoJSON(profile.drawFeatures);

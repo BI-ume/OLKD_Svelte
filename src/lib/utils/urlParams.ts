@@ -1,4 +1,6 @@
 import { layerStore } from '$lib/stores/layerStore';
+import type { MapState } from '$lib/mapState';
+import type { UrlSyncMode } from '$lib/layers/types';
 
 /** Internal: token from the compact layers param */
 interface LayerToken {
@@ -70,6 +72,58 @@ function parseLayerState(state: string): { visible: boolean; opacity: number } {
 	const visible = parts[0] === '1';
 	const opacityPct = parts.length > 1 ? parseInt(parts[1], 10) : 100;
 	return { visible, opacity: isNaN(opacityPct) ? 1 : opacityPct / 100 };
+}
+
+/**
+ * Encode a map state into the compact `layers` parameter.
+ *
+ * This is the lossy half of the split: `map` mode keeps only what is visible,
+ * and neither mode carries anything beyond layer display state. The state
+ * object itself stays complete — see `$lib/mapState`.
+ */
+export function serializeLayersParam(state: MapState, mode: UrlSyncMode): string | null {
+	const entries: string[] = [];
+
+	if (state.activeBackground) {
+		entries.push(state.activeBackground);
+	}
+
+	if (mode === 'map') {
+		// only visible overlays, addressed by name
+		for (const group of state.groups ?? []) {
+			for (const layer of group.layers) {
+				if (!layer.visible) continue;
+				const opacityPct = Math.round(layer.opacity * 100);
+				entries.push(opacityPct === 100 ? layer.name : `${layer.name}:${opacityPct}`);
+			}
+		}
+	} else if (mode === 'full') {
+		// every group, its layers addressed by position — or, for a singleSelect
+		// group, by the one-based index of the single visible layer
+		for (const group of state.groups ?? []) {
+			const config = layerStore.getGroupByName(group.name);
+			if (config?.singleSelect) {
+				const index = group.layers.findIndex((layer) => layer.visible);
+				if (index === -1) {
+					entries.push(`${group.name}(0)`);
+				} else {
+					const opacityPct = Math.round(group.layers[index].opacity * 100);
+					const token = opacityPct === 100 ? `${index + 1}` : `${index + 1}:${opacityPct}`;
+					entries.push(`${group.name}(${token})`);
+				}
+				continue;
+			}
+
+			const states = group.layers.map((layer) => {
+				const flag = layer.visible ? '1' : '0';
+				const opacityPct = Math.round(layer.opacity * 100);
+				return opacityPct === 100 ? flag : `${flag}:${opacityPct}`;
+			});
+			entries.push(`${group.name}(${states.join(',')})`);
+		}
+	}
+
+	return entries.length > 0 ? entries.join(',') : null;
 }
 
 /**
@@ -147,6 +201,34 @@ export function applyUrlLayerState(): { zoom: number; x: number; y: number } | n
 				console.warn(`[UrlSync] Group '${name}' from URL not found in config`);
 				return;
 			}
+			// singleSelect groups carry a one-based index of the visible layer
+			// instead of a flag per layer, since only one can be visible.
+			if (group.singleSelect) {
+				const match = /^(\d+)(?::(\d+))?$/.exec(content!.trim());
+				if (!match) {
+					console.warn(
+						`[UrlSync] Malformed state '${content}' for singleSelect group '${name}' — expected an index, optionally followed by ':opacity'`
+					);
+					return;
+				}
+				const [, indexPart, opacityPart] = match;
+				const oneBased = parseInt(indexPart, 10);
+				if (oneBased > group.layers.length) {
+					console.warn(
+						`[UrlSync] Layer index '${indexPart}' out of bounds for singleSelect group '${name}' (has ${group.layers.length} layer(s))`
+					);
+					return;
+				}
+				// 0 means no layer visible, and all layers are already hidden
+				if (oneBased === 0) return;
+
+				const layer = group.layers[oneBased - 1];
+				const opacityPct = opacityPart !== undefined ? parseInt(opacityPart, 10) : 100;
+				layerStore.setLayerVisibility(layer.name, true);
+				layerStore.setLayerOpacity(layer.name, isNaN(opacityPct) ? 1 : opacityPct / 100);
+				return;
+			}
+
 			content!.split(',').forEach((state, index) => {
 				if (index >= group.layers.length) {
 					console.warn(

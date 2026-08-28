@@ -202,10 +202,20 @@ function createLayerStore() {
 		 */
 		toggleLayerVisibility: (name: string): void => {
 			const layer = layersByName.get(name);
-			if (layer && !layer.isBackground) {
-				layer.setVisible(!layer.visible);
-				// No structural update() needed — per-layer callback handles reactivity
+			if (!layer || layer.isBackground) return;
+
+			// Route through the owning group so singleSelect is honoured; a
+			// direct setVisible() would let every layer of such a group be
+			// visible at once.
+			for (const group of groupsByName.values()) {
+				if (group.layers.some((l) => l.name === name)) {
+					group.toggleLayer(name);
+					return;
+				}
 			}
+
+			layer.setVisible(!layer.visible);
+			// No structural update() needed — per-layer callback handles reactivity
 		},
 
 		/**

@@ -176,6 +176,12 @@ def anol_overlay_layer(layer_conf):
     }
 
     # Optional properties
+    if 'timeSeries' in layer_conf:
+        anol_layer['timeSeries'] = layer_conf['timeSeries']
+
+    if 'viewportFilter' in layer_conf:
+        anol_layer['viewportFilter'] = layer_conf['viewportFilter']
+
     if 'opacity' in layer_conf:
         ol_layer['opacity'] = layer_conf['opacity']
         anol_layer['opacity'] = layer_conf['opacity']

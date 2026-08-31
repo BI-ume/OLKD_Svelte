@@ -3,6 +3,10 @@
 	import { layerStore, metadataPopupStore, mapStore } from '$lib/stores';
 	import { getLayerDisplay } from '$lib/stores/layerStore';
 	import { SIDEBAR_WIDTH } from '$lib/stores/sidebarStore';
+	import { SensorThings } from '$lib/layers/SensorThings';
+	import { getTimeSeriesState, attach } from '$lib/stores/timeSeriesStore';
+	import TimeSeriesPicker from './TimeSeriesPicker.svelte';
+	import { formatBucket } from '$lib/utils/timeFormat';
 
 	interface Props {
 		layer: Layer;
@@ -79,6 +83,57 @@
 	let opacityIconGrey = $derived(showSlider && opacity >= 100);
 
 	let menuContainer: HTMLDivElement;
+
+	// Time series: the line shows the time of the data actually drawn, which in
+	// the "latest" state is the only way to see what the map is showing.
+	let timeSeriesLayer = $derived(
+		layer instanceof SensorThings && layer.hasTimeSeries ? layer : null
+	);
+	let showPicker = $state(false);
+	// Safe to capture: LayerGroup keys each LayerItem by layer.name, so the
+	// prop never changes for an instance - same reasoning as displayStore above.
+	// svelte-ignore state_referenced_locally
+	const timeState = getTimeSeriesState(layer.name);
+
+	// Keep the store in step with the layer's own loads, so the line shows a
+	// time from the start rather than only after the picker is used.
+	$effect(() => {
+		if (timeSeriesLayer) return attach(timeSeriesLayer);
+	});
+
+	/**
+	 * The line always says something. In order of preference: the range, the
+	 * time of the data actually drawn, the requested window (which is what
+	 * shows when a chosen bucket turns out to be empty), then a placeholder
+	 * while the first response is still on its way.
+	 *
+	 * While a selection is loading the requested window wins, so the line
+	 * follows the choice immediately instead of lingering on the previous
+	 * reading until the data arrives.
+	 */
+	let timeLabel = $derived.by(() => {
+		if (!timeSeriesLayer) return '';
+		const granularity = timeSeriesLayer.granularity;
+		const window = $timeState.time;
+
+		if (timeSeriesLayer.timeSeries?.mode === 'range' && window) {
+			// the window is half-open, so the last instant it covers is one
+			// millisecond before its end
+			const last = new Date(window.end.getTime() - 1);
+			return `${formatBucket(window.start, granularity)} – ${formatBucket(last, granularity)}`;
+		}
+
+		if ($timeState.loading && window) return formatBucket(window.start, granularity);
+
+		const displayed = $timeState.displayedTime;
+		if (displayed) return formatBucket(displayed, granularity);
+		if (window) return formatBucket(window.start, granularity);
+		return '…';
+	});
+
+	// No window picked means the untimed query, which is also the only state
+	// the layer keeps polling in.
+	let isLatest = $derived($timeState.time === undefined);
 
 	function handleWindowClick(e: MouseEvent) {
 		if (showMenu && menuContainer && !menuContainer.contains(e.target as Node)) {
@@ -205,11 +260,68 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if timeSeriesLayer && visible}
+		<div class="time-line">
+			<button
+				class="time-btn"
+				onclick={() => (showPicker = !showPicker)}
+				aria-expanded={showPicker}
+				title={isLatest
+					? 'Zeitpunkt wählen - zeigt laufend den aktuellsten Wert'
+					: 'Zeitpunkt wählen - feste Auswahl, keine Aktualisierung'}
+			>
+				<span class="time-icon" class:live={isLatest}>
+					<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+						<path
+							d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"
+						/>
+					</svg>
+				</span>
+				<span>{timeLabel}</span>
+			</button>
+		</div>
+
+		{#if showPicker}
+			<TimeSeriesPicker layer={timeSeriesLayer} onClose={() => (showPicker = false)} />
+		{/if}
+	{/if}
 </div>
 
 <style>
 	.layer-item {
 		padding: 4px 0;
+	}
+
+	.time-line {
+		margin-left: 24px;
+		margin-top: 2px;
+	}
+
+	.time-btn {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		background: none;
+		border: none;
+		padding: 1px 2px;
+		cursor: pointer;
+		font-size: 12px;
+		color: #666;
+		border-radius: 4px;
+	}
+
+	.time-btn:hover {
+		background-color: #f0f0f0;
+	}
+
+	.time-icon {
+		display: flex;
+		transition: color 0.3s;
+	}
+
+	.time-icon.live {
+		color: #2196f3;
 	}
 
 	.layer-item.indented {

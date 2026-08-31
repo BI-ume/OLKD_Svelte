@@ -13,6 +13,10 @@
 import { get } from 'svelte/store';
 import { mapStore } from '$lib/stores/mapStore';
 import { layerStore, activeBackground, overlayGroups } from '$lib/stores/layerStore';
+import { SensorThings } from '$lib/layers/SensorThings';
+import { toCompactIso, fromCompactIso, timeWindow } from '$lib/utils/time';
+import { syncFromLayer } from '$lib/stores/timeSeriesStore';
+import type { Layer } from '$lib/layers/Layer';
 
 /** Display state of a single layer. */
 export interface LayerState {
@@ -20,6 +24,14 @@ export interface LayerState {
 	visible: boolean;
 	/** 0..1, as the layer stores it */
 	opacity: number;
+	/**
+	 * Selected time window for a time series layer, compact ISO. A single
+	 * instant for `mode: instant`, `start/end` for a range. Absent means the
+	 * layer is showing its latest data.
+	 */
+	time?: string;
+	/** Whether availability is scoped to the sensors in view. */
+	viewportFilter?: boolean;
 }
 
 /** A group and its layers, in configuration order. */
@@ -54,11 +66,26 @@ export function getMapState(): MapState {
 		activeBackground: get(activeBackground)?.name ?? null,
 		groups: get(overlayGroups).map((group) => ({
 			name: group.name,
-			layers: group.layers.map((layer) => ({
-				name: layer.name,
-				visible: layer.visible,
-				opacity: layer.opacity
-			}))
+			layers: group.layers.map((layer) => {
+				const state: LayerState = {
+					name: layer.name,
+					visible: layer.visible,
+					opacity: layer.opacity
+				};
+				if (layer instanceof SensorThings) {
+					const window = layer.getTime();
+					if (window) {
+						state.time =
+							layer.timeSeries?.mode === 'range'
+								? `${toCompactIso(window.start)}/${toCompactIso(window.end)}`
+								: toCompactIso(window.start);
+					}
+					if (layer.hasViewportFilter && layer.getViewportFilter()) {
+						state.viewportFilter = true;
+					}
+				}
+				return state;
+			})
 		}))
 	};
 }
@@ -130,6 +157,8 @@ export function applyMapState(state: MapState, options: ApplyMapStateOptions = {
 
 			layerStore.setLayerVisibility(layerState.name, visible);
 			layerStore.setLayerOpacity(layerState.name, layerState.opacity);
+
+			applyTimeSeriesState(layer, layerState.time, layerState.viewportFilter);
 		}
 	}
 
@@ -137,4 +166,49 @@ export function applyMapState(state: MapState, options: ApplyMapStateOptions = {
 	if (order.length > 0) {
 		layerStore.reorderGroups(order);
 	}
+}
+
+/**
+ * Restore a time series layer's selection.
+ *
+ * Exported because the url parser applies times layer by layer as it walks the
+ * `layers` parameter, and both paths must resolve a time identically - which is
+ * the point of the shared map state.
+ *
+ * The viewport filter is set first, so the reload the time triggers is the only
+ * one. An absent time means "leave at the config default", matching how the
+ * other optional fields are treated.
+ */
+export function applyTimeSeriesState(
+	layer: Layer,
+	time: string | undefined,
+	viewportFilter?: boolean
+): void {
+	if (!(layer instanceof SensorThings)) {
+		return;
+	}
+	if (layer.hasViewportFilter) {
+		layer.setViewportFilter(viewportFilter === true);
+	}
+
+	if (time === undefined) {
+		syncFromLayer(layer);
+		return;
+	}
+	if (!layer.granularity) {
+		console.warn(`[mapState] Layer '${layer.name}' has no time series granularity — ignoring time`);
+		return;
+	}
+
+	const [startPart, endPart] = time.split('/');
+	const start = fromCompactIso(startPart);
+	if (start === undefined) {
+		console.warn(`[mapState] Could not parse time '${time}' for layer '${layer.name}'`);
+		return;
+	}
+
+	const startWindow = timeWindow(start, layer.granularity);
+	const end = endPart === undefined ? undefined : fromCompactIso(endPart);
+	layer.setTime(end === undefined ? startWindow : { start: startWindow.start, end });
+	syncFromLayer(layer);
 }

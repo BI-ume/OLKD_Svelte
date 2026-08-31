@@ -118,6 +118,35 @@ export interface SimpleStyleConfig {
 
 export type StyleConfig = SimpleStyleConfig | Record<string, unknown> | Record<string, unknown>[];
 
+/**
+ * Marks a layer as a time series. The layerswitcher then shows the time of the
+ * data currently drawn, and offers a picker restricted to times that carry
+ * data.
+ */
+export interface TimeSeriesConfig {
+	/**
+	 * Bucket size as a single-unit ISO 8601 duration (`PT10M`, `P1D`, `P1M`),
+	 * or one of the word aliases. Note `PT1M` (minute) versus `P1M` (month).
+	 */
+	granularity: string;
+	/** A single instant (default) or a from-to range. */
+	mode?: 'instant' | 'range';
+	/** `latest` (default), `now`, an ISO timestamp, or an offset like `-1h`. */
+	default?: string;
+	min?: string;
+	max?: string;
+}
+
+/**
+ * Offers the "Auswählbare Zeiten" choice in the picker. It decides which
+ * sensors count when asking what data exists - it does not hide features and
+ * triggers no reload.
+ */
+export interface ViewportFilterConfig {
+	enabled?: boolean;
+	default?: 'off' | 'viewport';
+}
+
 // Layer types supported by the application
 export type LayerType =
 	| 'wms'
@@ -147,6 +176,8 @@ export interface LayerConfig {
 	featureinfo?: FeatureInfoConfig;
 	style?: StyleConfig;
 	externalGraphicPrefix?: string;
+	timeSeries?: TimeSeriesConfig;
+	viewportFilter?: ViewportFilterConfig;
 	displayInLayerswitcher?: boolean;
 	permalink?: boolean;
 	catalogLayer?: boolean;

@@ -70,7 +70,7 @@
 		where it is used. The layers still appear; only the group line (expand
 		arrow, group visibility toggle, title) is left out.
 	-->
-	<div class="layer-group">
+	<div class="layer-group ungrouped">
 		{#each group.layers as layer (layer.name)}
 			<LayerItem {layer} onRemove={onRemove ? () => onRemove(group.name) : undefined} />
 		{/each}
@@ -185,6 +185,10 @@
 <style>
 	.layer-group {
 		margin-bottom: 4px;
+	}
+
+	.ungrouped {	/* Align with grouped visibility toggles */
+		padding-left: 24px;
 	}
 
 	.group-header {

@@ -1,5 +1,6 @@
 import { layerStore } from '$lib/stores/layerStore';
-import type { MapState } from '$lib/mapState';
+import { applyTimeSeriesState, type MapState } from '$lib/mapState';
+import type { Layer } from '$lib/layers/Layer';
 import type { UrlSyncMode } from '$lib/layers/types';
 
 /** Internal: token from the compact layers param */
@@ -67,11 +68,44 @@ function tokenizeLayersParam(raw: string): LayerToken[] {
  * "1:80" → visible, 80% opacity
  * "0:50" → hidden,  50% opacity
  */
-function parseLayerState(state: string): { visible: boolean; opacity: number } {
-	const parts = state.split(':');
+function parseLayerState(state: string): { visible: boolean; opacity: number; time?: string } {
+	const { base, time } = splitTimeToken(state);
+	const parts = base.split(':');
 	const visible = parts[0] === '1';
 	const opacityPct = parts.length > 1 ? parseInt(parts[1], 10) : 100;
-	return { visible, opacity: isNaN(opacityPct) ? 1 : opacityPct / 100 };
+	return { visible, opacity: isNaN(opacityPct) ? 1 : opacityPct / 100, time };
+}
+
+/**
+ * The selected time rides on the layer entry after an `@`, so a group with two
+ * time series layers can carry two different times:
+ *
+ *   pegel_gruppe(2:40@20260820T0000Z)                  instant
+ *   pegel_gruppe(2:40@20260820T0000Z/20260820T1200Z)   range
+ *   g(1@20260820T0000Z,1@20260819T1200Z)               two timed layers
+ *
+ * Timestamps use ISO basic format because the surrounding syntax already
+ * spends `:` on opacity and `,` on layer separation.
+ */
+function splitTimeToken(entry: string): { base: string; time?: string } {
+	const at = entry.indexOf('@');
+	if (at === -1) {
+		return { base: entry };
+	}
+	return { base: entry.slice(0, at), time: entry.slice(at + 1) };
+}
+
+/** The `@time` suffix for a layer, or an empty string when showing the latest. */
+function timeToken(layer: { time?: string; viewportFilter?: boolean }): string {
+	return layer.time ? `@${layer.time}` : '';
+}
+
+/**
+ * Restore a layer's selected window from the url, through the same helper saved
+ * profiles use, so both resolve a time identically.
+ */
+function applyLayerTime(layer: Layer, time: string | undefined): void {
+	applyTimeSeriesState(layer, time);
 }
 
 /**
@@ -107,9 +141,10 @@ export function serializeLayersParam(state: MapState, mode: UrlSyncMode): string
 				if (index === -1) {
 					entries.push(`${group.name}(0)`);
 				} else {
-					const opacityPct = Math.round(group.layers[index].opacity * 100);
-					const token = opacityPct === 100 ? `${index + 1}` : `${index + 1}:${opacityPct}`;
-					entries.push(`${group.name}(${token})`);
+					const layer = group.layers[index];
+					const opacityPct = Math.round(layer.opacity * 100);
+					const base = opacityPct === 100 ? `${index + 1}` : `${index + 1}:${opacityPct}`;
+					entries.push(`${group.name}(${base}${timeToken(layer)})`);
 				}
 				continue;
 			}
@@ -117,7 +152,8 @@ export function serializeLayersParam(state: MapState, mode: UrlSyncMode): string
 			const states = group.layers.map((layer) => {
 				const flag = layer.visible ? '1' : '0';
 				const opacityPct = Math.round(layer.opacity * 100);
-				return opacityPct === 100 ? flag : `${flag}:${opacityPct}`;
+				const base = opacityPct === 100 ? flag : `${flag}:${opacityPct}`;
+				return `${base}${timeToken(layer)}`;
 			});
 			entries.push(`${group.name}(${states.join(',')})`);
 		}
@@ -204,7 +240,8 @@ export function applyUrlLayerState(): { zoom: number; x: number; y: number } | n
 			// singleSelect groups carry a one-based index of the visible layer
 			// instead of a flag per layer, since only one can be visible.
 			if (group.singleSelect) {
-				const match = /^(\d+)(?::(\d+))?$/.exec(content!.trim());
+				const { base, time } = splitTimeToken(content!.trim());
+				const match = /^(\d+)(?::(\d+))?$/.exec(base);
 				if (!match) {
 					console.warn(
 						`[UrlSync] Malformed state '${content}' for singleSelect group '${name}' — expected an index, optionally followed by ':opacity'`
@@ -226,6 +263,7 @@ export function applyUrlLayerState(): { zoom: number; x: number; y: number } | n
 				const opacityPct = opacityPart !== undefined ? parseInt(opacityPart, 10) : 100;
 				layerStore.setLayerVisibility(layer.name, true);
 				layerStore.setLayerOpacity(layer.name, isNaN(opacityPct) ? 1 : opacityPct / 100);
+				applyLayerTime(layer, time);
 				return;
 			}
 
@@ -236,9 +274,10 @@ export function applyUrlLayerState(): { zoom: number; x: number; y: number } | n
 					);
 					return;
 				}
-				const { visible, opacity } = parseLayerState(state.trim());
+				const { visible, opacity, time } = parseLayerState(state.trim());
 				layerStore.setLayerVisibility(group.layers[index].name, visible);
 				layerStore.setLayerOpacity(group.layers[index].name, opacity);
+				applyLayerTime(group.layers[index], time);
 			});
 		});
 

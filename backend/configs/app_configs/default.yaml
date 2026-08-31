@@ -40,6 +40,7 @@ groups:
         - wms_bielefeldkarte_farbe_hist
         - wms_bodenrichtwerte_2023
         - wms_luftbilder_2020
+        - sta_pegel
 
 # Include overlay layers
 layers:

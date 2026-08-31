@@ -5,7 +5,10 @@ groups:
   - name: sta_pegel
     title: 'Flusspegel (SensorThings)'
     showGroup: false
-    status: active
+    # inactive by default, like every other group here: apps opt in through
+    # their own `groups.include`, which is what keeps this dev layer out of the
+    # transport app
+    status: inactive
     catalog: true
     layers:
       - pegel_sta
@@ -21,8 +24,17 @@ layers:
       url: 'https://geoportal.kreis-herford.de/iot'
       urlParameters:
         filter: "substringof('Flusspegel', name)"
-        expand: 'Thing/Locations,Observations($orderby=phenomenonTime desc;$top=1)'
-      refreshInterval: 30
+        expand: 'Thing/Locations,Observations({timeFilter}$orderby=phenomenonTime desc;$top=1)'
+      # the gauges publish every ten minutes, so polling faster than that
+      # cannot reveal anything new
+      refreshInterval: 600
+    timeSeries:
+      granularity: PT10M
+      mode: instant
+      default: latest
+    viewportFilter:
+      enabled: true
+      default: 'off'
     style:
       - style:
           # circle-radius: 6

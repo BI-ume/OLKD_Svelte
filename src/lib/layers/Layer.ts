@@ -1,6 +1,13 @@
 import type BaseLayer from 'ol/layer/Base';
 import type { Extent } from 'ol/extent';
-import type { LayerConfig, OlLayerConfig, LegendConfig, FeatureInfoConfig } from './types';
+import type {
+	LayerConfig,
+	OlLayerConfig,
+	LegendConfig,
+	FeatureInfoConfig,
+	TimeSeriesConfig,
+	ViewportFilterConfig
+} from './types';
 
 /**
  * Base class for all layer types.
@@ -17,6 +24,8 @@ export abstract class Layer {
 	readonly abstract?: string;
 	readonly previewImage?: string;
 	readonly featureinfo?: FeatureInfoConfig;
+	readonly timeSeries?: TimeSeriesConfig;
+	readonly viewportFilter?: ViewportFilterConfig;
 
 	protected _visible: boolean;
 	protected _opacity: number;
@@ -37,6 +46,8 @@ export abstract class Layer {
 		this.abstract = config.abstract;
 		this.previewImage = config.previewImage;
 		this.featureinfo = config.featureinfo;
+		this.timeSeries = config.timeSeries;
+		this.viewportFilter = config.viewportFilter;
 
 		this._visible = config.visible ?? config.olLayer?.visible ?? false;
 		this._opacity = config.opacity ?? config.olLayer?.opacity ?? 1;
@@ -130,6 +141,16 @@ export abstract class Layer {
 	 */
 	getExtent(): Extent | null {
 		return this._olLayer?.getExtent() ?? null;
+	}
+
+	/** Whether this layer is a time series the picker applies to. */
+	get hasTimeSeries(): boolean {
+		return this.timeSeries !== undefined;
+	}
+
+	/** Whether the picker offers the "Auswählbare Zeiten" choice. */
+	get hasViewportFilter(): boolean {
+		return this.viewportFilter?.enabled === true;
 	}
 
 	/**

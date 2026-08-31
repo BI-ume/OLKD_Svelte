@@ -63,110 +63,124 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<div class="layer-group">
-	<div class="group-header">
-		<button
-			class="expand-btn"
-			onclick={toggleExpanded}
-			title={expanded ? 'Gruppe einklappen' : 'Gruppe ausklappen'}
-			aria-expanded={expanded}
-		>
-			<svg
-				viewBox="0 0 24 24"
-				width="16"
-				height="16"
-				fill="currentColor"
-				class:rotated={expanded}
+{#if group.showGroup === false}
+	<!--
+		`showGroup: false` means the group is presented as a plain layer entry
+		rather than as a group - documented for single-layer groups, which is
+		where it is used. The layers still appear; only the group line (expand
+		arrow, group visibility toggle, title) is left out.
+	-->
+	<div class="layer-group">
+		{#each group.layers as layer (layer.name)}
+			<LayerItem {layer} onRemove={onRemove ? () => onRemove(group.name) : undefined} />
+		{/each}
+	</div>
+{:else}
+	<div class="layer-group">
+		<div class="group-header">
+			<button
+				class="expand-btn"
+				onclick={toggleExpanded}
+				title={expanded ? 'Gruppe einklappen' : 'Gruppe ausklappen'}
+				aria-expanded={expanded}
 			>
-				<path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-			</svg>
-		</button>
-
-		<button
-			class="visibility-btn"
-			onclick={toggleGroupVisibility}
-			title={hasVisibleLayers ? 'Gruppe ausblenden' : 'Gruppe einblenden'}
-		>
-			<span class="visibility-icon" class:visible={hasVisibleLayers}>
-				{#if hasVisibleLayers}
-					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-						<path
-							d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-						/>
-					</svg>
-				{:else}
-					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-						<path
-							d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
-						/>
-					</svg>
-				{/if}
-			</span>
-		</button>
-
-		<button class="group-title-btn" onclick={toggleExpanded}>
-			<span class="group-title">{group.title}</span>
-		</button>
-
-		<button
-			class="drag-handle"
-			title="Reihenfolge ändern"
-			aria-label="Layer verschieben"
-			tabindex="-1"
-		>
-			<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-				<path d="M3 9h18v2H3V9zm0 4h18v2H3v-2z"/>
-			</svg>
-		</button>
-
-		{#if hasMenuItems}
-			<div class="menu-container" bind:this={menuContainer}>
-				<button
-					class="menu-btn"
-					class:active={showMenu}
-					onclick={toggleMenu}
-					title="Mehr Optionen"
-					aria-label="Mehr Optionen"
-					aria-expanded={showMenu}
+				<svg
+					viewBox="0 0 24 24"
+					width="16"
+					height="16"
+					fill="currentColor"
+					class:rotated={expanded}
 				>
-					<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-					</svg>
-				</button>
+					<path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+				</svg>
+			</button>
 
-				{#if showMenu}
-					<div class="menu-dropdown">
-						{#if hasMetadata}
-							<button class="menu-item" onclick={handleInfo}>
-								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-									<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-								</svg>
-								<span>Info</span>
-							</button>
-						{/if}
+			<button
+				class="visibility-btn"
+				onclick={toggleGroupVisibility}
+				title={hasVisibleLayers ? 'Gruppe ausblenden' : 'Gruppe einblenden'}
+			>
+				<span class="visibility-icon" class:visible={hasVisibleLayers}>
+					{#if hasVisibleLayers}
+						<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+							<path
+								d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+							/>
+						</svg>
+					{:else}
+						<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+							<path
+								d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
+							/>
+						</svg>
+					{/if}
+				</span>
+			</button>
 
-						{#if onRemove}
-							<button class="menu-item remove" onclick={handleRemove}>
-								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-									<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-								</svg>
-								<span>Entfernen</span>
-							</button>
-						{/if}
-					</div>
-				{/if}
+			<button class="group-title-btn" onclick={toggleExpanded}>
+				<span class="group-title">{group.title}</span>
+			</button>
+
+			<button
+				class="drag-handle"
+				title="Reihenfolge ändern"
+				aria-label="Layer verschieben"
+				tabindex="-1"
+			>
+				<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+					<path d="M3 9h18v2H3V9zm0 4h18v2H3v-2z"/>
+				</svg>
+			</button>
+
+			{#if hasMenuItems}
+				<div class="menu-container" bind:this={menuContainer}>
+					<button
+						class="menu-btn"
+						class:active={showMenu}
+						onclick={toggleMenu}
+						title="Mehr Optionen"
+						aria-label="Mehr Optionen"
+						aria-expanded={showMenu}
+					>
+						<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+							<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+						</svg>
+					</button>
+
+					{#if showMenu}
+						<div class="menu-dropdown">
+							{#if hasMetadata}
+								<button class="menu-item" onclick={handleInfo}>
+									<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+										<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+									</svg>
+									<span>Info</span>
+								</button>
+							{/if}
+
+							{#if onRemove}
+								<button class="menu-item remove" onclick={handleRemove}>
+									<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+										<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+									</svg>
+									<span>Entfernen</span>
+								</button>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</div>
+
+		{#if expanded}
+			<div class="group-layers">
+				{#each group.layers as layer (layer.name)}
+					<LayerItem {layer} indented />
+				{/each}
 			</div>
 		{/if}
 	</div>
-
-	{#if expanded}
-		<div class="group-layers">
-			{#each group.layers as layer (layer.name)}
-				<LayerItem {layer} indented />
-			{/each}
-		</div>
-	{/if}
-</div>
+{/if}
 
 <style>
 	.layer-group {

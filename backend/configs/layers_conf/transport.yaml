@@ -7,7 +7,6 @@ groups:
     abstract: 'Stadtbahn/Bus am Tag und Nachtbus in Bielefeld und Umgebung'
     status: inactive
     singleSelect: true
-    showGroup: false
     metadataUrl: 'https://bielefeld01.de/mdOLKD/WMS/oepnv_netz_bi_karte?FORMAT=HTML_WMS'
     layers:
       - oepnv_tag
